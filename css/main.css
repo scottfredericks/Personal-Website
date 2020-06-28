@@ -42,6 +42,7 @@ p.filler {
   overflow: hidden;
   padding-top: 10px;
   padding-bottom: 10px;
+  overflow: visible;
 }
 .text-block > h2 {
   text-align: center;
@@ -187,7 +188,6 @@ p.filler {
 #Experience table td {
   vertical-align: top;
   padding-bottom: 20px;
-  overflow: show;
 }
 #Experience table td:nth-of-type(1) {
   width: 30%;
