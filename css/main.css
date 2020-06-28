@@ -237,6 +237,21 @@ p.filler {
 }
 
 /*Change style for mobile*/
-@media screen and (max-width: 580px) {
-
+@media screen and (max-width: 800px) {
+  .text-block {
+    width: 70%;
+  }
+  #Hello .block {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+@media screen and (max-width: 600px) {
+  .text-block {
+    width: 90%;
+  }
+  #Hello .block {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
 }
