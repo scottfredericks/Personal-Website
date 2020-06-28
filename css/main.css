@@ -57,7 +57,6 @@ p.filler {
   font-size: x-large;
   margin-top: 10px;
 }
-
 .columns-3 {
   -webkit-column-count: 2;
   -moz-column-count: 2;
@@ -68,6 +67,9 @@ p.filler {
   -webkit-column-rule: 1px solid #CCC;
   -moz-column-rule: 1px solid #CCC;
   column-rule: 1px solid #CCC;
+}
+.clear {
+  clear: both;
 }
 
 
