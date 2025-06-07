@@ -73,32 +73,28 @@
        cy="100"
        cx="100"
        id="path34"
-       style="fill:#ffffff;stroke-width:0.264838" />
+       style="fill:#ffffff;stroke-width:0.264838;fill-opacity:1" />
     <circle
        r="85"
        cy="100"
        cx="100"
        id="path36"
-       style="fill:#333333;fill-opacity:1;stroke-width:1.2484" />
+       style="fill:#044c6f;fill-opacity:1;stroke-width:1.2484" />
     <text
-       style="fill:black;fill-opacity:1;line-height:1.25;stroke:none;font-family:sans-serif;font-style:normal;font-weight:normal;font-size:10.58333333px;white-space:pre;shape-inside:url(#rect863)"
+       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect863);display:inline;fill:#000000;fill-opacity:1;stroke:none"
        id="text861"
        xml:space="preserve" />
     <text
        id="text869"
        y="137.86946"
        x="35.522503"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:109.081px;line-height:1.25;font-family:Georgia;-inkscape-font-specification:Georgia;fill:#000000;fill-opacity:1;stroke:none;stroke-width:2.72704"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:109.081px;line-height:1.25;font-family:Georgia;-inkscape-font-specification:Georgia;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.72704"
        xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;stroke-width:2.72704"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;fill:#ffffff;fill-opacity:1;stroke-width:2.72704"
          y="137.86946"
          x="35.522503"
          id="tspan867"
-         sodipodi:role="line"><tspan
-           id="tspan871"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;fill:#f5d516;fill-opacity:1;stroke-width:2.72704">S</tspan><tspan
-           id="tspan879"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;fill:#dc622b;fill-opacity:1;stroke-width:2.72704">F</tspan></tspan></text>
+         sodipodi:role="line">SF</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:3.175px;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;stroke-width:0.264583"

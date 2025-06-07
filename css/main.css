@@ -53,7 +53,7 @@ p.filler {
   text-align: center;
 }
 .text-block > p:nth-of-type(1) {
-  text-align: center;
+  /* text-align: center; */
   font-size: x-large;
   margin-top: 10px;
 }
@@ -174,27 +174,41 @@ p.filler {
 
 
 /* Experience section */
-#Experience table {
+#Experience table,
+#Education table {
   width: 100%;
   border-collapse: collapse;
 }
-#Experience table tr {
+#Experience table tr,
+#Education table tr {
   transition: background-color 0.5s ease;
 }
-#Experience table tr:hover {
+#Experience table tr:hover,
+#Education table tr:hover {
   background-color: white;
   transition: background-color 0.5s ease;
 }
-#Experience table td {
+#Experience table td,
+#Education table td {
   vertical-align: top;
   padding-bottom: 20px;
 }
-#Experience table td:nth-of-type(1) {
+#Experience table td:nth-of-type(1),
+#Education table td:nth-of-type(1) {
   width: 30%;
 }
-#Experience table * {
+#Experience table *,
+#Education table * {
   margin: 5px;
   margin-bottom: auto;
+}
+#Experience table tr,
+#Ecucation table tr {
+  vertical-align: top;
+}
+#Experience table td:nth-of-type(1),
+#Education table td:nth-of-type(1) {
+  vertical-align: top !important;
 }
 
 
