@@ -56,6 +56,7 @@ p.filler {
   /* text-align: center; */
   font-size: x-large;
   margin-top: 10px;
+  text-align: center;
 }
 .columns-3 {
   -webkit-column-count: 2;
