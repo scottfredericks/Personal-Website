@@ -53,10 +53,9 @@ p.filler {
   text-align: center;
 }
 .text-block > p:nth-of-type(1) {
-  /* text-align: center; */
+  text-align: center;
   font-size: x-large;
   margin-top: 10px;
-  text-align: center;
 }
 .columns-3 {
   -webkit-column-count: 2;
