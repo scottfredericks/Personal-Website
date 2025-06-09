@@ -7,13 +7,13 @@ body {
   padding: 0px;
 }
 .background-white {
-  background-color: white;
+  background-color: #FAFAFA;
 }
 .background-light {
-  background-color: #eee5cb;
+  background-color: #F4F1E8;
 }
 .background-dark {
-  background-color: #333;
+  background-color: #044C6F;
   color: white;
 }
 
@@ -75,7 +75,7 @@ p.filler {
 
 /* Navbar */
 #Navbar {
-  background-color: #333;
+  background-color: #044C6F;
   position: sticky;
   z-index: 1;
   top: 0px;
