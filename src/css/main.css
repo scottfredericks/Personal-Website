@@ -54,6 +54,11 @@ body {
 
     margin: 0;
     padding: 0;
+
+    /* Allows Canvas to resize to content */
+    position: relative;
+    min-height: 100vh;
+
 }
 
 main {
