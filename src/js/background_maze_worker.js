@@ -4,7 +4,7 @@
 
 const CONFIG = {
     gridSize: 30,
-    strokeWidth: 5,
+    strokeWidth: 5, // Kept at 5 as requested
     minSegmentLength: 4,
     maxSegmentLength: 12,
     turnProbability: 0.15,
@@ -13,12 +13,12 @@ const CONFIG = {
     growthSpeed: 9.0, 
     seedDensityArea: 196,
     tileMultiplier: 8,
-    baseDensityUnit: 6
+    baseDensityUnit: 6 
 };
 
 // Size calculations
 const PATTERN_GRID_SIZE = CONFIG.baseDensityUnit * CONFIG.tileMultiplier;
-const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize; // 750px
+const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize;
 
 const PALETTE_DARK_BG = ["#2CE1D8", "#FFF9ED", "#E45143", "#FFF9ED"];
 const PALETTE_LIGHT_BG = ["#2CE1D8", "#02020D", "#E45143", "#02020D"];
@@ -46,7 +46,7 @@ let totalSeedSlots = 0;
 
 // BATCH QUEUES
 let strokeQueue = [];
-let capQueue = [];
+// caps removed (using native round)
 
 // --- CRAWLER CLASS --- 
 class Crawler {
@@ -68,7 +68,6 @@ class Crawler {
         this.animY = y * gs + (gs/2);
         this.targetX = this.animX;
         this.targetY = this.animY;
-        this.queueCap(this.animX, this.animY, this.colorIdx);
     }
 
     update(crawlerList) {
@@ -134,8 +133,8 @@ class Crawler {
                     }
                 }
             }
+            
             if (nextDir !== this.dir) {
-                this.queueCap(this.animX, this.animY, this.colorIdx);
                 this.currentSegLen = 0;
             } else {
                 this.currentSegLen++;
@@ -158,6 +157,7 @@ class Crawler {
             const speedSq = CONFIG.growthSpeed * CONFIG.growthSpeed;
             let nextX, nextY;
             let reached = false;
+            
             if (distSq <= speedSq) {
                 nextX = this.targetX;
                 nextY = this.targetY;
@@ -167,8 +167,9 @@ class Crawler {
                 nextX = this.animX + Math.cos(angle) * CONFIG.growthSpeed;
                 nextY = this.animY + Math.sin(angle) * CONFIG.growthSpeed;
             }
+            
             this.queueStroke(this.animX, this.animY, nextX, nextY, this.colorIdx);
-            this.queueCap(nextX, nextY, this.colorIdx);
+            
             this.animX = nextX;
             this.animY = nextY;
             if (reached) {
@@ -186,11 +187,6 @@ class Crawler {
     queueStroke(x1, y1, x2, y2, cIdx) {
         if (!strokeQueue[cIdx]) strokeQueue[cIdx] = [];
         strokeQueue[cIdx].push({ x1, y1, x2, y2 });
-    }
-
-    queueCap(x, y, cIdx) {
-        if (!capQueue[cIdx]) capQueue[cIdx] = [];
-        capQueue[cIdx].push({ x, y });
     }
 
     pickBestTurn(options) {
@@ -259,7 +255,6 @@ function applyTheme(themeName) {
         currentBackgroundColor = "#02020D"; 
     }
     strokeQueue = new Array(currentPalette.length).fill(0).map(() => []);
-    capQueue = new Array(currentPalette.length).fill(0).map(() => []);
 }
 
 // --- ANIMATION MANAGER ---
@@ -274,15 +269,13 @@ function startAnimation() {
     degrees = new Array(size).fill(0).map(() => new Array(size).fill(0));
     colorMap = new Array(size).fill(0).map(() => new Array(size).fill(0));
     
-    // Clear Queues
     strokeQueue = new Array(currentPalette.length).fill(0).map(() => []);
-    capQueue = new Array(currentPalette.length).fill(0).map(() => []);
 
-    // Clear Screen Once
+    // Clear Screen
+    ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = currentBackgroundColor;
     ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
     
-    // Signal start
     self.postMessage({ type: "started", id: respondingToId });
 
     let crawlers = [];
@@ -324,7 +317,6 @@ function startAnimation() {
 
         // 2. FILLING
         if (crawlers.length < totalSeedSlots) {
-            // NOTE: This function call is vital for space filling. it must exist below.
             if (findAndSpawnFill(crawlers)) active = true;
         }
         if (crawlers.length > 0) active = true;
@@ -347,91 +339,66 @@ function startAnimation() {
 }
 
 /**
- * Executes draw commands onto a SINGLE TILE (750x750).
+ * Executes draw commands onto a SINGLE TILE.
  */
 function flushRenderQueues() {
     const w = PATTERN_PIXEL_SIZE;
     const buffer = CONFIG.strokeWidth * 2;
-    const rad = CONFIG.strokeWidth / 2;
-
+    
     ctx.lineWidth = CONFIG.strokeWidth;
-    ctx.lineCap = 'butt';
+    // Native round caps are cleanest
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Default blending
+    ctx.globalCompositeOperation = 'source-over';
     
     for(let cIdx = 0; cIdx < currentPalette.length; cIdx++) {
         const strokes = strokeQueue[cIdx];
-        const caps = capQueue[cIdx];
-        
-        if (strokes.length === 0 && caps.length === 0) continue;
+        if (strokes.length === 0) continue;
 
         const color = currentPalette[cIdx];
         ctx.strokeStyle = color;
-        ctx.fillStyle = color;
+        // fillStyle unused
 
-        // BATCH STROKES
-        if (strokes.length > 0) {
-            ctx.beginPath();
-            for(let i = 0; i < strokes.length; i++) {
-                const s = strokes[i];
-                const x1 = s.x1, y1 = s.y1;
-                const x2 = s.x2, y2 = s.y2;
+        ctx.beginPath();
+        for(let i = 0; i < strokes.length; i++) {
+            const s = strokes[i];
+            
+            // PIXEL ALIGNMENT FIX FOR ODD STROKE WIDTHS
+            // Adding 0.5 centers the stroke on a grid line boundary, 
+            // ensuring the edges fall on exact integer pixels.
+            // This prevents the anti-aliased "haze" on straight lines.
+            const x1 = Math.floor(s.x1) + 0.5;
+            const y1 = Math.floor(s.y1) + 0.5;
+            const x2 = Math.floor(s.x2) + 0.5;
+            const y2 = Math.floor(s.y2) + 0.5;
 
-                let wrappedX = 0, wrappedY = 0;
-                if (Math.max(x1, x2) > w - buffer) wrappedX = -w;
-                else if (Math.min(x1, x2) < buffer) wrappedX = w;
-                if (Math.max(y1, y2) > w - buffer) wrappedY = -w;
-                else if (Math.min(y1, y2) < buffer) wrappedY = w;
-                const isSplit = (wrappedX !== 0 || wrappedY !== 0);
+            let wrappedX = 0, wrappedY = 0;
+            if (Math.max(x1, x2) > w - buffer) wrappedX = -w;
+            else if (Math.min(x1, x2) < buffer) wrappedX = w;
+            if (Math.max(y1, y2) > w - buffer) wrappedY = -w;
+            else if (Math.min(y1, y2) < buffer) wrappedY = w;
+            const isSplit = (wrappedX !== 0 || wrappedY !== 0);
 
-                const add = (dx, dy) => {
-                    ctx.moveTo(x1 + dx, y1 + dy);
-                    ctx.lineTo(x2 + dx, y2 + dy);
-                };
+            const add = (dx, dy) => {
+                ctx.moveTo(x1 + dx, y1 + dy);
+                ctx.lineTo(x2 + dx, y2 + dy);
+            };
 
-                add(0, 0); 
-                
-                if (isSplit) {
-                    if (wrappedX !== 0) add(wrappedX, 0);
-                    if (wrappedY !== 0) add(0, wrappedY);
-                    if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX, wrappedY);
-                }
+            add(0, 0); 
+            
+            if (isSplit) {
+                if (wrappedX !== 0) add(wrappedX, 0);
+                if (wrappedY !== 0) add(0, wrappedY);
+                if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX, wrappedY);
             }
-            ctx.stroke();
-            strokeQueue[cIdx] = []; 
         }
-
-        // BATCH CAPS
-        if (caps.length > 0) {
-            ctx.beginPath();
-            for(let i = 0; i < caps.length; i++) {
-                const c = caps[i];
-                const x = c.x, y = c.y;
-
-                let wrappedX = 0, wrappedY = 0;
-                if (x > w - buffer) wrappedX = -w;
-                else if (x < buffer) wrappedX = w;
-                if (y > w - buffer) wrappedY = -w;
-                else if (y < buffer) wrappedY = w;
-                const isSplit = (wrappedX !== 0 || wrappedY !== 0);
-
-                const add = (dx, dy) => {
-                    ctx.moveTo(x + dx + rad, y + dy); 
-                    ctx.arc(x + dx, y + dy, rad, 0, Math.PI*2);
-                };
-
-                add(0, 0);
-                if (isSplit) {
-                    if (wrappedX !== 0) add(wrappedX, 0);
-                    if (wrappedY !== 0) add(0, wrappedY);
-                    if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX, wrappedY);
-                }
-            }
-            ctx.fill();
-            capQueue[cIdx] = [];
-        }
+        ctx.stroke();
+        strokeQueue[cIdx] = []; 
     }
 }
 
-// RESTORED FUNCTION
 function findAndSpawnFill(crawlerList) {
     let candidates = [];
     let weakCandidates = [];
@@ -439,14 +406,10 @@ function findAndSpawnFill(crawlerList) {
     const scanHeight = 50; 
     const size = PATTERN_GRID_SIZE;
     const startRow = Math.floor(Math.random() * size);
-    const safeStart = startRow;
-    const safeEnd = Math.min(size, startRow + scanHeight);
-
+    
     for (let x = 0; x < size; x += step) {
-        // Toroidal scan loop would be better, but clamped is okay for now given randomness
-        // Actually, let's fix the scan loop to wrap properly for better density
         for (let i = 0; i < scanHeight; i++) {
-            const y = (safeStart + i) % size;
+            const y = (startRow + i) % size;
             
             if (!grid[x][y]) continue;
             if (degrees[x][y] >= 3) continue;
