@@ -67,29 +67,26 @@ let currentBackgroundColor = "#000000";
  * INITIALIZATION
  * ==========================================
  */
+
 function setup() {
-    // 1. Detect Theme & Set Colors
-    // We check the data-theme attribute on <html>
-    const theme = document.documentElement.getAttribute("data-theme") || "light";
-    
-    // NOTE: Based on your CSS, the 'dark' theme implies the Light Background (#FFF9ED) properties?
-    // If standard conventions apply (dark theme = dark bg), swap these assignments.
-    // Below logic assumes: data-theme="dark" -> Light background palette (based on your CSS snippet)
-    // If your data-theme="dark" actually means Dark Mode, change the condition to: theme === 'dark'
-    
-    // Checking your specific CSS provided:
-    // :root (Default) -> --background1: #02020D (Dark BG)
-    // [data-theme="dark"] -> --background1: #FFF9ED (Light BG)
-    
-    if (theme === "dark") {
-        currentPalette = PALETTE_LIGHT_BG;
-        currentBackgroundColor = "#FFF9ED"; 
+    // 1. Detect Theme
+    // Check attribute. If null, it means we are using the default :root (Dark).
+    const themeAttr = document.documentElement.getAttribute("data-theme");
+    const isLightMode = (themeAttr === "light");
+
+    // 2. Set Colors based on mode
+    if (isLightMode) {
+        // CSS BG is Light (#fffdf8), so we need the DARK palette for lines
+        currentPalette = PALETTE_LIGHT_BG; 
+        currentBackgroundColor = "#fffdf8"; 
     } else {
-        currentPalette = PALETTE_DARK_BG;
+        // CSS BG is Dark (#02020D), so we need the LIGHT palette for lines
+        // This is the default
+        currentPalette = PALETTE_DARK_BG; 
         currentBackgroundColor = "#02020D"; 
     }
 
-    // 2. Resize
+    // 3. Resize and Generate
     const w = window.innerWidth;
     const h = window.innerHeight;
     

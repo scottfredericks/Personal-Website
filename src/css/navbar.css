@@ -20,14 +20,14 @@ body {
      Instead of a gradient inside the bar, we make the bar solid 
      so the text is always legible.
   */
-  background-color: var(--background1);
+  background-color: var(--background2);
   
   /* Remove the pointer-events rule here, default is fine */
 }
 
 /* 
    NEW: The Underslung Fade
-   This creates the "100% to 125%" effect. It hangs off the bottom
+   This creates the "100% to 115%" effect. It hangs off the bottom
    of the navbar and fades to transparent.
 */
 .navbar::after {
@@ -36,11 +36,10 @@ body {
   top: 100%; /* Starts exactly at the bottom of the navbar */
   left: 0;
   width: 100%;
-  /* 25% of 80px is 20px. Adjust this value if you want a longer fade. */
-  height: 20px; 
+  height: 10px; 
   background: linear-gradient(
     to bottom, 
-    var(--background1) 0%, 
+    var(--background2) 0%, 
     transparent 100%
   );
   pointer-events: none; /* Crucial: lets users click content underneath the fade */

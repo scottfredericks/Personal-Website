@@ -4,26 +4,26 @@
     --background2: #050726;
     --background3: #090D40;
     --foreground1: #FFF9ED;
-    --foreground2: #e4ca9b;
-    --foreground3: #d1a656;
+    --foreground2: #e9d9af;
+    --foreground3: #d3ac63;
     --primary1: #2CE1D8;
     --primary2: #21A59E;
-    --primary3: #156B67;
+    --primary3: #1e7974;
     --secondary1: #E45143;
     --secondary2: #9E3D33;
     --secondary3: #6B2A22;
     --accent1: #FFDF30;
     --accent2: #E3B542;
     --accent3: #C98B3A;
-    --backdrop1: #02020db6;
+    --backdrop1: #02020d98;
     --backdrop2: #02020d7e;
 }
 
 /* Dark Theme Override */
-[data-theme="dark"] {
-    --background1: #FFF9ED;
-    --background2: #e4ca9b;
-    --background3: #d1a656;
+[data-theme="light"] {
+    --background1: #fffcf6;
+    --background2: #e9d9af;
+    --background3: #d3ac63;
     --foreground1: #02020D;
     --foreground2: #050726;
     --foreground3: #090D40;
@@ -31,23 +31,22 @@
     --primary2: #9E3D33;
     --primary3: #6B2A22;
     --secondary1: #2CE1D8;
-    --secondary2: #313636;
-    --secondary3: #156B67;
+    --secondary2: #21A59E;
+    --secondary3: #1e7974;
     --accent1: #463012;
     --accent2: #7A541F;
     --accent3: #9D6B27;
-    --backdrop1: #fffefbe8;
-    --backdrop2: #fffcf52a;
+    --backdrop1: #fffefbef;
+    --backdrop2: #fffcf500;
 }
 
 /* Main styling and layout */
 
 body {
-    /* https://fonts.google.com/specimen/Source+Sans+3 */
-    /* Note that you need to include some links in the HTML <head> element */
-    font-family: "Source Sans 3", sans-serif;
+    /* Open Sans: https://fonts.google.com/specimen/Open+Sans */
+    font-family: "Open Sans", sans-serif;
     font-style: normal;
-    font-weight: 500;
+    font-weight: 450;
     font-size: large;
 
     background-color: var(--background1);
@@ -66,7 +65,7 @@ main {
     background: var(--backdrop1);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
     color: var(--foreground3);
 }
 
@@ -76,6 +75,10 @@ h1, h2 {
 
 h2 {
     margin-top: 3rem;
+}
+
+h4, h5, h6 {
+    color: var(--foreground2);
 }
 
 /* Styling for non-text elements */

@@ -1,7 +1,7 @@
 ---
-title: Creating a Personal Website Using Lume and GitHub Pages
+title: Building a Personal Website Using Lume and GitHub Pages
 ---
-# Creating a Personal Website Using Lume and GitHub Pages
+# Building a Personal Website Using Lume and GitHub Pages
 
 *See the source repo [here](https://github.com/scottfredericks/Personal-Website).*
 
@@ -9,7 +9,7 @@ The situation: I know enough HTML, CSS, and JavaScript to cobble a few pages tog
 
 Enter: an early version of my personal website:
 
-![Early version of the website](/img/blog/personal-website/website-v1.jpg)
+![Early version of the website](/img/blog/personal-website/website-v1.png)
 
 It's... fine. It gets the job done, and it shows potential employers that I know how to Google things.
 
@@ -247,6 +247,8 @@ All files in that directory would then use the layout defined in `src/_includes/
 
 ### Adding Resources
 
+#### Adding CSS
+
 OK, now we know how to use (and re-use) HTML. Now let's add some CSS.
 
 Other than the option to use templating, CSS works the same way it does outside of Lume. Let's add a CSS file at `src/css/main.css`. The exact filename doesn't matter; I just like this convention because it keeps CSS files separate and indicates their purpose. For now we'll just specify a font:
@@ -281,7 +283,7 @@ Now `css/main.css` should be added to the `_site` folder, and we should see the 
 
 Note that when we apply styling, we want to target the HTML elements that get generated in the final output, and not the literal contents of the Markdown files themselves. Remember: the website consists of everything that gets output to the `_site` folder, and nothing else.
 
-#### JavaScript
+#### Adding JavaScript
 
 JavaScript works more or less the same way; we can add all JavaScript files within a `src/js` folder, and add these files using another line in `_config.ts`:
 
@@ -291,7 +293,7 @@ site.add("/js");
 
 Then we can reference these js files using the `<script>` element like we would normally.
 
-#### Images
+#### Adding Images
 
 Images are slightly different since we are using Markdown instead of HTML. It's still pretty simple though. You can add images within `md` files using the following syntax:
 

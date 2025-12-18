@@ -7,7 +7,19 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+
+    <script>
+      // Immediately check local storage
+      (function() {
+        const savedTheme = localStorage.getItem("theme");
+        // Only apply 'light' if specifically saved. 
+        // Otherwise, we do nothing, which defaults to ':root' (Dark).
+        if (savedTheme === "light") {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
   </head>
   <body>
     {{ include "components/background_maze.html.vto" }}
