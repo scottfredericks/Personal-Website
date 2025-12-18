@@ -64,6 +64,7 @@ body {
 main {
     position: relative;
     z-index: 2; /* Sits above the fixed canvas */
+    width: 70%;
     max-width: 900px;
     margin: 0 auto;
     padding: 100px 20px;
