@@ -12,13 +12,13 @@ const CONFIG = {
     colorChangeRate: 15,
     growthSpeed: 9.0, 
     seedDensityArea: 196,
-    tileMultiplier: 5,
-    baseDensityUnit: 5 
+    tileMultiplier: 8,
+    baseDensityUnit: 6
 };
 
 // Size calculations
 const PATTERN_GRID_SIZE = CONFIG.baseDensityUnit * CONFIG.tileMultiplier;
-const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize;
+const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize; // 750px
 
 const PALETTE_DARK_BG = ["#2CE1D8", "#FFF9ED", "#E45143", "#FFF9ED"];
 const PALETTE_LIGHT_BG = ["#2CE1D8", "#02020D", "#E45143", "#02020D"];
@@ -29,11 +29,12 @@ const DIRS = {
     NW: { x: -1, y: -1 }, SE: { x: 1, y: 1 }
 };
 
-let canvas = null;
+// Internal Canvas
+let offscreenCanvas = null;
 let ctx = null;
 
 let currentJobId = 0; 
-let currentExternalRequestId = 0; // Tracks ID from main thread
+let currentExternalRequestId = 0;
 
 let currentPalette = [];
 let currentBackgroundColor = "#000000";
@@ -43,39 +44,30 @@ let animationFrameId;
 let grid, degrees, colorMap;
 let totalSeedSlots = 0;
 
-// Viewport layout
-let tilesX = 1;
-let tilesY = 1;
-
 // BATCH QUEUES
 let strokeQueue = [];
 let capQueue = [];
 
-// --- CRAWLER CLASS --- (No changes to class logic, keeping for context)
+// --- CRAWLER CLASS --- 
 class Crawler {
     constructor(x, y, dir, forceLen, colorIdx) {
         this.x = x; 
         this.y = y; 
-        
         if (grid[x][y] !== undefined) {
             grid[x][y] = true;
             colorMap[x][y] = colorIdx;
         }
-
         this.dir = dir;
         this.forceLen = forceLen; 
         this.colorIdx = colorIdx;
         this.stepCount = 0; 
         this.currentSegLen = 0;
-
         this.state = 'THINKING'; 
         const gs = CONFIG.gridSize;
-        
         this.animX = x * gs + (gs/2);
         this.animY = y * gs + (gs/2);
         this.targetX = this.animX;
         this.targetY = this.animY;
-        
         this.queueCap(this.animX, this.animY, this.colorIdx);
     }
 
@@ -84,18 +76,14 @@ class Crawler {
             let validMoves = [];
             const cols = PATTERN_GRID_SIZE;
             const rows = PATTERN_GRID_SIZE;
-
             for (let [key, vec] of Object.entries(DIRS)) {
                 const tx = (this.x + vec.x + cols) % cols;
                 const ty = (this.y + vec.y + rows) % rows;
                 if (!grid[tx][ty]) validMoves.push(key);
             }
-
             if (validMoves.length === 0) return false; 
-
             let nextDir = null;
             const canContinue = validMoves.includes(this.dir);
-
             if (this.forceLen > 0) {
                 if (canContinue) nextDir = this.dir;
                 else if (validMoves.length > 0) nextDir = this.pickBestTurn(validMoves);
@@ -123,23 +111,19 @@ class Crawler {
                     nextDir = this.pickBestTurn(validMoves);
                 }
             }
-
             this.stepCount++;
             let nextColorIdx = this.colorIdx;
             if (this.stepCount > CONFIG.colorChangeRate) {
                 this.stepCount = 0;
                 nextColorIdx = (this.colorIdx + 1) % currentPalette.length;
             }
-
             const vec = DIRS[nextDir];
             const nx = (this.x + vec.x + cols) % cols;
             const ny = (this.y + vec.y + rows) % rows;
-
             grid[nx][ny] = true;
             degrees[this.x][this.y]++;
             degrees[nx][ny]++;
             colorMap[nx][ny] = nextColorIdx;
-
             if (this.forceLen <= 0 && crawlerList.length >= totalSeedSlots) {
                 if (Math.random() < CONFIG.chanceToBranch) {
                     const branchOpts = validMoves.filter(d => d !== nextDir);
@@ -150,7 +134,6 @@ class Crawler {
                     }
                 }
             }
-
             if (nextDir !== this.dir) {
                 this.queueCap(this.animX, this.animY, this.colorIdx);
                 this.currentSegLen = 0;
@@ -158,11 +141,9 @@ class Crawler {
                 this.currentSegLen++;
             }
             if (this.forceLen > 0) this.forceLen--;
-
             const gs = CONFIG.gridSize;
             this.targetX = this.animX + (vec.x * gs);
             this.targetY = this.animY + (vec.y * gs);
-            
             this.x = nx;
             this.y = ny;
             this.dir = nextDir;
@@ -170,16 +151,13 @@ class Crawler {
             this.state = 'MOVING';
             return true;
         }
-
         if (this.state === 'MOVING') {
             const dx = this.targetX - this.animX;
             const dy = this.targetY - this.animY;
             const distSq = dx*dx + dy*dy;
             const speedSq = CONFIG.growthSpeed * CONFIG.growthSpeed;
-
             let nextX, nextY;
             let reached = false;
-
             if (distSq <= speedSq) {
                 nextX = this.targetX;
                 nextY = this.targetY;
@@ -189,21 +167,16 @@ class Crawler {
                 nextX = this.animX + Math.cos(angle) * CONFIG.growthSpeed;
                 nextY = this.animY + Math.sin(angle) * CONFIG.growthSpeed;
             }
-
             this.queueStroke(this.animX, this.animY, nextX, nextY, this.colorIdx);
             this.queueCap(nextX, nextY, this.colorIdx);
-
             this.animX = nextX;
             this.animY = nextY;
-
             if (reached) {
                 const w = PATTERN_PIXEL_SIZE; 
                 if (this.animX < 0) this.animX += w;
                 else if (this.animX >= w) this.animX -= w;
-                
                 if (this.animY < 0) this.animY += w;
                 else if (this.animY >= w) this.animY -= w;
-
                 this.state = 'THINKING';
             }
             return true;
@@ -262,30 +235,20 @@ self.onmessage = function(e) {
     const data = e.data;
 
     if (data.type === 'init') {
-        canvas = data.canvas;
-        ctx = canvas.getContext('2d', { alpha: false });
-        calculateTiles();
+        const size = PATTERN_PIXEL_SIZE;
+        offscreenCanvas = new OffscreenCanvas(size, size);
+        ctx = offscreenCanvas.getContext('2d');
         applyTheme(data.theme);
     } 
     else {
-        // Store the ID from the main thread
         if (typeof data.id !== 'undefined') {
             currentExternalRequestId = data.id;
         }
-
         currentJobId++; 
-        if (data.width) handleResize(data.width, data.height);
         if (data.theme) applyTheme(data.theme);
         startAnimation();
     }
 };
-
-function calculateTiles() {
-    if (!canvas) return;
-    const size = PATTERN_PIXEL_SIZE;
-    tilesX = Math.ceil(canvas.width / size) + 1;
-    tilesY = Math.ceil(canvas.height / size) + 1;
-}
 
 function applyTheme(themeName) {
     if (themeName === "light") {
@@ -299,20 +262,10 @@ function applyTheme(themeName) {
     capQueue = new Array(currentPalette.length).fill(0).map(() => []);
 }
 
-function handleResize(w, h) {
-    if (!canvas) return;
-    if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-    }
-    calculateTiles();
-}
-
 // --- ANIMATION MANAGER ---
 
 function startAnimation() {
     const jobId = currentJobId;
-    // Capture the request ID that triggered this specific run
     const respondingToId = currentExternalRequestId;
     const size = PATTERN_GRID_SIZE;
 
@@ -327,9 +280,9 @@ function startAnimation() {
 
     // Clear Screen Once
     ctx.fillStyle = currentBackgroundColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
     
-    // Echo the ID back to the main thread
+    // Signal start
     self.postMessage({ type: "started", id: respondingToId });
 
     let crawlers = [];
@@ -371,6 +324,7 @@ function startAnimation() {
 
         // 2. FILLING
         if (crawlers.length < totalSeedSlots) {
+            // NOTE: This function call is vital for space filling. it must exist below.
             if (findAndSpawnFill(crawlers)) active = true;
         }
         if (crawlers.length > 0) active = true;
@@ -378,13 +332,23 @@ function startAnimation() {
         // 3. RENDER
         if (active) {
             flushRenderQueues();
-            animationFrameId = requestAnimationFrame(loop);
+            
+            self.createImageBitmap(offscreenCanvas).then(bitmap => {
+                self.postMessage({ type: 'render', bitmap: bitmap, id: respondingToId }, [bitmap]);
+                
+                if (currentJobId === jobId) {
+                    animationFrameId = requestAnimationFrame(loop);
+                }
+            });
         }
     }
 
     loop();
 }
 
+/**
+ * Executes draw commands onto a SINGLE TILE (750x750).
+ */
 function flushRenderQueues() {
     const w = PATTERN_PIXEL_SIZE;
     const buffer = CONFIG.strokeWidth * 2;
@@ -403,6 +367,7 @@ function flushRenderQueues() {
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
 
+        // BATCH STROKES
         if (strokes.length > 0) {
             ctx.beginPath();
             for(let i = 0; i < strokes.length; i++) {
@@ -417,27 +382,24 @@ function flushRenderQueues() {
                 else if (Math.min(y1, y2) < buffer) wrappedY = w;
                 const isSplit = (wrappedX !== 0 || wrappedY !== 0);
 
-                for(let tx = 0; tx < tilesX; tx++) {
-                    for(let ty = 0; ty < tilesY; ty++) {
-                        const ox = tx * w;
-                        const oy = ty * w;
-                        const add = (dx, dy) => {
-                            ctx.moveTo(x1 + dx, y1 + dy);
-                            ctx.lineTo(x2 + dx, y2 + dy);
-                        };
-                        add(ox, oy);
-                        if (isSplit) {
-                            if (wrappedX !== 0) add(wrappedX + ox, oy);
-                            if (wrappedY !== 0) add(ox, wrappedY + oy);
-                            if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX + ox, wrappedY + oy);
-                        }
-                    }
+                const add = (dx, dy) => {
+                    ctx.moveTo(x1 + dx, y1 + dy);
+                    ctx.lineTo(x2 + dx, y2 + dy);
+                };
+
+                add(0, 0); 
+                
+                if (isSplit) {
+                    if (wrappedX !== 0) add(wrappedX, 0);
+                    if (wrappedY !== 0) add(0, wrappedY);
+                    if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX, wrappedY);
                 }
             }
             ctx.stroke();
             strokeQueue[cIdx] = []; 
         }
 
+        // BATCH CAPS
         if (caps.length > 0) {
             ctx.beginPath();
             for(let i = 0; i < caps.length; i++) {
@@ -451,21 +413,16 @@ function flushRenderQueues() {
                 else if (y < buffer) wrappedY = w;
                 const isSplit = (wrappedX !== 0 || wrappedY !== 0);
 
-                for(let tx = 0; tx < tilesX; tx++) {
-                    for(let ty = 0; ty < tilesY; ty++) {
-                        const ox = tx * w;
-                        const oy = ty * w;
-                        const add = (dx, dy) => {
-                            ctx.moveTo(x + dx + rad, y + dy); 
-                            ctx.arc(x + dx, y + dy, rad, 0, Math.PI*2);
-                        };
-                        add(ox, oy);
-                        if (isSplit) {
-                            if (wrappedX !== 0) add(wrappedX + ox, oy);
-                            if (wrappedY !== 0) add(ox, wrappedY + oy);
-                            if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX + ox, wrappedY + oy);
-                        }
-                    }
+                const add = (dx, dy) => {
+                    ctx.moveTo(x + dx + rad, y + dy); 
+                    ctx.arc(x + dx, y + dy, rad, 0, Math.PI*2);
+                };
+
+                add(0, 0);
+                if (isSplit) {
+                    if (wrappedX !== 0) add(wrappedX, 0);
+                    if (wrappedY !== 0) add(0, wrappedY);
+                    if (wrappedX !== 0 && wrappedY !== 0) add(wrappedX, wrappedY);
                 }
             }
             ctx.fill();
@@ -474,6 +431,7 @@ function flushRenderQueues() {
     }
 }
 
+// RESTORED FUNCTION
 function findAndSpawnFill(crawlerList) {
     let candidates = [];
     let weakCandidates = [];
@@ -485,7 +443,11 @@ function findAndSpawnFill(crawlerList) {
     const safeEnd = Math.min(size, startRow + scanHeight);
 
     for (let x = 0; x < size; x += step) {
-        for (let y = safeStart; y < safeEnd; y += step) {
+        // Toroidal scan loop would be better, but clamped is okay for now given randomness
+        // Actually, let's fix the scan loop to wrap properly for better density
+        for (let i = 0; i < scanHeight; i++) {
+            const y = (safeStart + i) % size;
+            
             if (!grid[x][y]) continue;
             if (degrees[x][y] >= 3) continue;
 

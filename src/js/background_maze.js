@@ -4,56 +4,44 @@
 
 (function() {
     const htmlCanvas = document.getElementById('background-maze-canvas');
+    const ctx = htmlCanvas.getContext('2d', { alpha: true }); // Standard 2D context
     const FADE_OUT_DURATION = 800; 
     const RESIZE_DEBOUNCE_TIME = 300; 
 
-    if (!htmlCanvas.transferControlToOffscreen) {
-        console.warn("OffscreenCanvas not supported.");
-        return;
-    }
-
-    const offscreen = htmlCanvas.transferControlToOffscreen();
+    // We do NOT use transferControlToOffscreen anymore.
     const worker = new Worker('/js/background_maze_worker.js'); 
     
     let pendingTimeout;
     let isFirstLoad = true;
-
-    // Request ID System to prevent "flashing" of stale mazes
     let currentRequestId = 0;
 
-    // Track dimensions to prevent duplicate firing
+    // Dimensions
     let lastWidth = 0;
     let lastHeight = 0;
+
+    // Rendering State
+    let currentBitmap = null; // The texture received from worker
+    let isRendering = false;
 
     function getTheme() {
         const val = document.documentElement.getAttribute("data-theme");
         return (val === "light") ? "light" : "dark";
     }
 
-    function getDimensions() {
-        const body = document.body;
-        const html = document.documentElement;
-        
-        const fullHeight = Math.max( 
-            body.scrollHeight, body.offsetHeight, 
-            html.clientHeight, html.scrollHeight, html.offsetHeight,
-            window.innerHeight
-        );
-        const fullWidth = html.clientWidth || window.innerWidth;
-        return { width: fullWidth, height: fullHeight };
+    /**
+     * Resizes the generic canvas to fit the viewport exactly.
+     * Since it is position:fixed, it matches window.inner*
+     */
+    function updateCanvasSize() {
+        htmlCanvas.width = window.innerWidth;
+        htmlCanvas.height = window.innerHeight;
     }
 
-    /**
-     * Sends the command to the worker. 
-     * Includes the 'currentRequestId' so we can specificially validate the response later.
-     */
     function triggerWorkerGeneration(type) {
-        const dims = getDimensions();
-        
+        // We no longer send dims to the worker for logic, 
+        // as the worker only cares about the pattern size.
         worker.postMessage({
             type: type,
-            width: dims.width,
-            height: dims.height,
             theme: getTheme(),
             id: currentRequestId 
         });
@@ -61,45 +49,101 @@
         isFirstLoad = false;
     }
 
+    // --- The Main Thread Render Loop ---
+    // This tiles the available bitmap based on scroll position
+    function startRenderLoop() {
+        if (isRendering) return;
+        isRendering = true;
+        
+        function frame() {
+            if (!currentBitmap) {
+                // Keep running to catch the bitmap when it arrives
+                requestAnimationFrame(frame);
+                return;
+            }
+
+            // 1. Clear
+            ctx.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
+
+            // 2. Calculate Scroll Offset
+            const patternSize = currentBitmap.width; // Should be 750px based on config
+            
+            // We want the maze to move "up" when we scroll down, naturally.
+            // wrappedY is the offset into the first tile.
+            // window.scrollY of 0 means start at 0.
+            // window.scrollY of 10 means ship everything up 10px (draw at -10).
+            const scrollY = window.scrollY;
+            const offsetY = -(scrollY % patternSize);
+            const offsetX = 0; // Can extend for horizontal scroll if desired
+
+            // 3. Tile
+            // Start drawing from just above the screen to ensure no gaps
+            // We loop until we have covered height + patternSize
+            const cols = Math.ceil(htmlCanvas.width / patternSize) + 1;
+            const rows = Math.ceil(htmlCanvas.height / patternSize) + 2;
+
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    // Coordinates might need to be shifted back if offset is positive,
+                    // but here offset is negative (moving up).
+                    // We start at -patternSize to handle the partial tile entering from top (if scrolling up)
+                    // Actually simple logic: simply grid it out.
+                    const dx = c * patternSize + offsetX;
+                    const dy = (r * patternSize) + offsetY;
+                    
+                    ctx.drawImage(currentBitmap, dx, dy);
+                }
+            }
+            
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    }
+
     // --- Worker Listener ---
     worker.onmessage = (e) => {
         const data = e.data;
         
-        // Only reveal if the message matches the MOST RECENT request.
-        // If 'currentRequestId' has incremented since this job started 
-        // (due to a new resize event), we ignore this completion.
-        if (data.type === 'started' && data.id === currentRequestId) {
+        // ID Check: If this message belongs to an old request, ignore it.
+        if (data.id !== currentRequestId) {
+            // Close bitmap to prevent memory leaks if it was sent
+            if (data.bitmap) data.bitmap.close();
+            return;
+        }
+
+        if (data.type === 'started') {
+            // Worker is reporting restart. Reveal canvas.
             requestAnimationFrame(() => {
-                htmlCanvas.classList.add('loaded');
+               htmlCanvas.classList.add('loaded');
             });
+        }
+        else if (data.type === 'render') {
+            // Update texture
+            if (currentBitmap) currentBitmap.close(); // Cleanup old frame
+            currentBitmap = data.bitmap;
         }
     };
 
     // --- Observers ---
 
-    // 1. Init Worker (Setup only)
-    worker.postMessage({ 
-        type: 'init', 
-        canvas: offscreen, 
-        theme: getTheme()
-    }, [offscreen]);
+    // 1. Init
+    updateCanvasSize();
+    startRenderLoop(); // Start the painting loop immediately
+    worker.postMessage({ type: 'init', theme: getTheme() }); // No canvas passed
 
     // 2. Resize Observer
     const observer = new ResizeObserver(() => {
-        const dims = getDimensions();
+        const w = window.innerWidth;
+        const h = window.innerHeight;
 
-        if (dims.width === lastWidth && dims.height === lastHeight) {
-            return;
-        }
-        lastWidth = dims.width;
-        lastHeight = dims.height;
+        if (w === lastWidth && h === lastHeight) return;
+        lastWidth = w;
+        lastHeight = h;
 
-        // 1. Invalidate previous requests immediately.
-        // Any worker job currently running is now considered "stale".
-        // Its completion message will be ignored because IDs won't match.
+        updateCanvasSize(); // Immediately resize the drawing surface
+
+        // Logic Flash Prevention
         currentRequestId++; 
-
-        // 2. Clear any pending generation triggers.
         clearTimeout(pendingTimeout);
 
         if (isFirstLoad) {
@@ -107,10 +151,7 @@
                 triggerWorkerGeneration('resize');
             }, 100);
         } else {
-            // 3. Hide Canvas immediately
             htmlCanvas.classList.remove('loaded');
-
-            // 4. Wait for resize to STOP before requesting new generation
             pendingTimeout = setTimeout(() => {
                 triggerWorkerGeneration('resize');
             }, RESIZE_DEBOUNCE_TIME);
@@ -128,7 +169,6 @@
         });
 
         if (themeChanged) {
-            // Invalidate race conditions
             currentRequestId++; 
             clearTimeout(pendingTimeout);
             
@@ -136,7 +176,6 @@
                 htmlCanvas.classList.remove('loaded');
             }
 
-            // Wait for fade out to complete before generating
             pendingTimeout = setTimeout(() => {
                 triggerWorkerGeneration('themeChange');
             }, FADE_OUT_DURATION);
