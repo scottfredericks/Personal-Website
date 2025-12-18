@@ -1,0 +1,32 @@
+#background-maze-div {
+    /* 1. Take it out of flow and pin it to the screen */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* 2. Center the canvas inside (if canvas is smaller than screen) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* 3. Send it to the back */
+    z-index: 0;
+}
+
+/* The overlay anchors to #background-maze because it is 'fixed' */
+#background-maze-div::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: 
+        linear-gradient(to right, var(--background1), var(--backdrop2) 30%, var(--backdrop2) 70%, var(--background1) 100%),
+        linear-gradient(to bottom, var(--background1) 0%, var(--backdrop2) 30%, var(--backdrop2) 70%, var(--background1) 100%);
+}
+
+canvas {
+    background: var(--background1);
+}

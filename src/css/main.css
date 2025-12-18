@@ -1,0 +1,122 @@
+/* Global properties */
+:root {
+    --background1: #02020D;
+    --background2: #050726;
+    --background3: #090D40;
+    --foreground1: #FFF9ED;
+    --foreground2: #e4ca9b;
+    --foreground3: #d1a656;
+    --primary1: #2CE1D8;
+    --primary2: #21A59E;
+    --primary3: #156B67;
+    --secondary1: #E45143;
+    --secondary2: #9E3D33;
+    --secondary3: #6B2A22;
+    --accent1: #FFDF30;
+    --accent2: #E3B542;
+    --accent3: #C98B3A;
+    --backdrop1: #02020db6;
+    --backdrop2: #02020d7e;
+}
+
+/* Dark Theme Override */
+[data-theme="dark"] {
+    --background1: #FFF9ED;
+    --background2: #e4ca9b;
+    --background3: #d1a656;
+    --foreground1: #02020D;
+    --foreground2: #050726;
+    --foreground3: #090D40;
+    --primary1: #E45143;
+    --primary2: #9E3D33;
+    --primary3: #6B2A22;
+    --secondary1: #2CE1D8;
+    --secondary2: #313636;
+    --secondary3: #156B67;
+    --accent1: #463012;
+    --accent2: #7A541F;
+    --accent3: #9D6B27;
+    --backdrop1: #fffefbe8;
+    --backdrop2: #fffcf52a;
+}
+
+/* Main styling and layout */
+
+body {
+    /* https://fonts.google.com/specimen/Source+Sans+3 */
+    /* Note that you need to include some links in the HTML <head> element */
+    font-family: "Source Sans 3", sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: large;
+
+    background-color: var(--background1);
+    color: var(--foreground1);
+
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    position: relative;
+    z-index: 2; /* Sits above the fixed canvas */
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 100px 20px;
+    background: var(--backdrop1);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--foreground3);
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+h2 {
+    margin-top: 3rem;
+}
+
+/* Styling for non-text elements */
+
+img, video, canvas, svg {
+    max-width: 100%;
+    height: auto;
+
+    display: block;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+pre, code {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+pre {
+    max-width: 100%;
+    overflow-x: auto;
+
+    background-color: var(--background2);
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+/* Links */
+
+main a:link {
+    color: var(--primary1);
+}
+
+main a:visited {
+    color: var(--primary3);
+}
+
+main a:hover {
+    color: var(--primary2);
+}
+
+main a:active {
+    color: var(--primary3);
+}
