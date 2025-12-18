@@ -15,8 +15,8 @@
     --accent1: #FFDF30;
     --accent2: #E3B542;
     --accent3: #C98B3A;
-    --backdrop1: #02020d98;
-    --backdrop2: #02020d7e;
+    --backdrop1: #02020dbe;
+    --backdrop2: #02020d5b;
 }
 
 /* Dark Theme Override */
@@ -43,10 +43,10 @@
 /* Main styling and layout */
 
 body {
-    /* Open Sans: https://fonts.google.com/specimen/Open+Sans */
-    font-family: "Open Sans", sans-serif;
+    /* Roboto Mono: https://fonts.google.com/specimen/Roboto+Mono */
+    font-family: "Roboto Mono", monospace;
     font-style: normal;
-    font-weight: 450;
+    font-weight: 400;
     font-size: large;
 
     background-color: var(--background1);
