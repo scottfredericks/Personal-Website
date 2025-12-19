@@ -11,14 +11,14 @@
     --primary1: #2CE1D8;
     --primary2: #21A59E;
     --primary3: #1e7974;
-    --secondary1: #E45143;
+    --secondary1: #fd5b5b;
     --secondary2: #9E3D33;
     --secondary3: #6B2A22;
     --accent1: #FFDF30;
     --accent2: #E3B542;
     --accent3: #C98B3A;
     --backdrop1: #02020dde;
-    --backdrop2: #02020d5b;
+    --backdrop2: #02020d33;
 }
 
 /* Dark Theme Override */
@@ -29,7 +29,7 @@
     --foreground1: #02020D;
     --foreground2: #050726;
     --foreground3: #090D40;
-    --primary1: #E45143;
+    --primary1: #fd5b5b;
     --primary2: #9E3D33;
     --primary3: #6B2A22;
     --secondary1: #2CE1D8;
