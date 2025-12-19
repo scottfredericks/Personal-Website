@@ -412,6 +412,17 @@ function flushRenderQueues() {
 }
 
 function findAndSpawnFill(crawlerList) {
+    // FIX START: Identify cells that are currently being moved INTO
+    // These cells are logically "true" in the grid, but the line
+    // has not visually reached them yet.
+    const lockedCells = new Set();
+    for(let c of crawlerList) {
+        if(c.state === 'MOVING') {
+            lockedCells.add(`${c.x},${c.y}`);
+        }
+    }
+    // FIX END
+
     let candidates = [];
     let weakCandidates = [];
     const step = 2; 
@@ -424,6 +435,11 @@ function findAndSpawnFill(crawlerList) {
             const y = (startRow + i) % size;
             
             if (!grid[x][y]) continue;
+            
+            // FIX START: Skip if this cell is currently "under construction"
+            if (lockedCells.has(`${x},${y}`)) continue;
+            // FIX END
+
             if (degrees[x][y] >= 3) continue;
 
             let validDirs = [];
