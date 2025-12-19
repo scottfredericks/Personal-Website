@@ -1,10 +1,12 @@
 ---
 title: Scott Fredericks - About Me
 ---
-# Scott Fredericks
+# Hi! I'm Scott Fredericks
 
-I'm a programmer guy.
+**I like solving interesting problems** {: style="text-align:center"}
 
-I do stuff.
+## Here's a cool physics thing
 
-[Blog Post](/blog/personal-website)
+![Spinor visualization](/img/main/spinor.gif)
+
+## [Most Recent Blog Post](/blog/personal-website)

@@ -14,8 +14,8 @@
     --secondary1: #fd5b5b;
     --secondary2: #9E3D33;
     --secondary3: #6B2A22;
-    --accent1: #FFDF30;
-    --accent2: #E3B542;
+    --accent1: #ffe056;
+    --accent2: #e3b842;
     --accent3: #C98B3A;
     --backdrop1: #02020dde;
     --backdrop2: #02020d33;
@@ -77,8 +77,12 @@ main {
     background: var(--backdrop1);
 }
 
-h1, h2, h3 {
-    color: var(--foreground3);
+h1 {
+    color: var(--accent1);
+}
+
+h2, h3 {
+    color: var(--accent2);
 }
 
 h1, h2 {
@@ -90,7 +94,7 @@ h2 {
 }
 
 h4, h5, h6 {
-    color: var(--foreground2);
+    color: var(--accent3);
 }
 
 /* Styling for non-text elements */
