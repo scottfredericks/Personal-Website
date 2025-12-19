@@ -374,9 +374,12 @@ function startAnimation() {
                 self.postMessage({ 
                     type: 'render', 
                     bitmap: bitmap, 
-                    heads: heads, 
+                    heads: [], // No heads ensures lights turn off
                     id: respondingToId 
                 }, [bitmap]);
+                
+                // NOTIFY MAIN THREAD WE ARE DONE
+                self.postMessage({ type: 'finished', id: respondingToId });
             });
         }
     }

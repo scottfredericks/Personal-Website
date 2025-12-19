@@ -10,10 +10,12 @@
     const ctx = htmlCanvas.getContext('2d', { alpha: true }); 
     const FADE_OUT_DURATION = 800; 
     const RESIZE_DEBOUNCE_TIME = 300; 
+    const AUTO_REGEN_DELAY = 1000; // Time to wait after generation finishes
 
     const worker = new Worker('/js/background_maze_worker.js'); 
     
     let pendingTimeout;
+    let autoRegenTimeout; // Tracks the "wait and fade" logic
     let isFirstLoad = true;
     let currentRequestId = 0;
 
@@ -49,6 +51,10 @@
         const theme = getTheme();
         currentTheme = theme; 
         
+        // Critical: If we receive a manual trigger (theme, resize) while waiting 
+        // to auto-regenerate, cancel the auto-regeneration so we don't fade out prematurely.
+        clearTimeout(autoRegenTimeout);
+
         if (currentBitmap) {
             currentBitmap.close();
             currentBitmap = null;
@@ -162,6 +168,26 @@
                 currentHeads = data.heads;
             }
         }
+        else if (data.type === 'finished') {
+            // Maze generation is complete. 
+            // 1. Wait for AUTO_REGEN_DELAY (1 sec)
+            // 2. Remove loaded class (fade out)
+            // 3. Wait for FADE_OUT_DURATION (0.8 sec)
+            // 4. Trigger regenerate
+            
+            autoRegenTimeout = setTimeout(() => {
+                htmlCanvas.classList.remove('loaded');
+
+                autoRegenTimeout = setTimeout(() => {
+                    // Only trigger if we are still on the same request ID 
+                    // (though triggerWorkerGeneration handles clearing the timeout too)
+                    if (currentRequestId === data.id) {
+                        triggerWorkerGeneration('finished_regen');
+                    }
+                }, FADE_OUT_DURATION);
+
+            }, AUTO_REGEN_DELAY);
+        }
     };
 
     updateCanvasSize();
@@ -183,6 +209,7 @@
 
         currentRequestId++; 
         clearTimeout(pendingTimeout);
+        clearTimeout(autoRegenTimeout); // Stop any pending fade-outs
 
         if (isFirstLoad) {
             pendingTimeout = setTimeout(() => {
@@ -209,6 +236,7 @@
         if (themeChanged) {
             currentRequestId++; 
             clearTimeout(pendingTimeout);
+            clearTimeout(autoRegenTimeout); // Stop any pending fade-outs
             
             if (!isFirstLoad) {
                 htmlCanvas.classList.remove('loaded');

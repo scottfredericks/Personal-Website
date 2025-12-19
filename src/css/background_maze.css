@@ -28,12 +28,15 @@ canvas {
     
     pointer-events: none;
     opacity: 0;
+    /* Transition for FADE OUT (when .loaded is removed) */
     transition: opacity 0.8s ease;
 }
 
 canvas.loaded {
     opacity: 1;
-    transition: none;
+    /* Transition for FADE IN (when .loaded is adding)
+       Changed from 'none' to '0.4s' to make the entry less jarring */
+    transition: opacity 0.8s ease;
 }
 
 /* Your gradient overlay */
