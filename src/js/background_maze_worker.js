@@ -26,7 +26,8 @@ const PALETTE_LIGHT_BG = ["#21A59E", "#02020D", "#bb4040ff", "#02020D"];
 const DIRS = {
     N:  { x: 0, y: -1 }, S:  { x: 0, y: 1 },
     E:  { x: 1, y: 0 },  W:  { x: -1, y: 0 },
-    NW: { x: -1, y: -1 }, SE: { x: 1, y: 1 }
+    NW: { x: -1, y: -1 }, SE: { x: 1, y: 1 },
+    // NE: { x: 1, y: -1 },  SW: { x: -1, y: 1 } // Added remaining diagonals for robust support
 };
 
 // Internal Canvas
@@ -74,12 +75,35 @@ class Crawler {
             let validMoves = [];
             const cols = PATTERN_GRID_SIZE;
             const rows = PATTERN_GRID_SIZE;
+            
             for (let [key, vec] of Object.entries(DIRS)) {
                 const tx = (this.x + vec.x + cols) % cols;
                 const ty = (this.y + vec.y + rows) % rows;
-                if (!grid[tx][ty]) validMoves.push(key);
+                
+                // 1. Basic Check: Is destination empty?
+                if (!grid[tx][ty]) {
+                    // 2. Crossing Check for Diagonals
+                    // Prevent "X" intersections by ensuring we aren't cutting a corner between two blocks
+                    if (Math.abs(vec.x) === 1 && Math.abs(vec.y) === 1) {
+                        const n1x = (this.x + vec.x + cols) % cols; // neighbor 1
+                        const n1y = this.y;
+                        const n2x = this.x;
+                        const n2y = (this.y + vec.y + rows) % rows; // neighbor 2
+                        
+                        // If neighbors are empty, we are safe. If one is filled, safe. 
+                        // If BOTH are filled, we are crossing a wall.
+                        if (!grid[n1x][n1y] || !grid[n2x][n2y]) {
+                            validMoves.push(key);
+                        }
+                    } else {
+                        // Cardinal moves are always safe if destination is empty
+                        validMoves.push(key);
+                    }
+                }
             }
+
             if (validMoves.length === 0) return false; 
+            
             let nextDir = null;
             const canContinue = validMoves.includes(this.dir);
             if (this.forceLen > 0) {
@@ -350,7 +374,7 @@ function startAnimation() {
                 self.postMessage({ 
                     type: 'render', 
                     bitmap: bitmap, 
-                    heads: [], // <--- EMPTY HEADS ARRAY
+                    heads: heads, 
                     id: respondingToId 
                 }, [bitmap]);
             });
@@ -363,9 +387,12 @@ function startAnimation() {
 function flushRenderQueues() {
     const w = PATTERN_PIXEL_SIZE;
     const buffer = CONFIG.strokeWidth * 2;
+    const radius = CONFIG.strokeWidth / 2; // Radius for manual joins
     
     ctx.lineWidth = CONFIG.strokeWidth;
-    ctx.lineCap = 'round';
+    // We switch to BUTT caps to prevent the browser's internal AA
+    // from doubling up at the overlaps.
+    ctx.lineCap = 'butt'; 
     ctx.lineJoin = 'round';
     ctx.globalCompositeOperation = 'source-over';
     
@@ -375,16 +402,17 @@ function flushRenderQueues() {
 
         const color = currentPalette[cIdx];
         ctx.strokeStyle = color;
+        ctx.fillStyle = color; // Needed for the manual circles
 
+        // 1. Draw the Lines (Butt caps)
         ctx.beginPath();
         for(let i = 0; i < strokes.length; i++) {
             const s = strokes[i];
             
-            // 0.5 Offset trick for odd widths
-            const x1 = Math.floor(s.x1) + 0.5;
-            const y1 = Math.floor(s.y1) + 0.5;
-            const x2 = Math.floor(s.x2) + 0.5;
-            const y2 = Math.floor(s.y2) + 0.5;
+            const x1 = s.x1 + 0.5;
+            const y1 = s.y1 + 0.5;
+            const x2 = s.x2 + 0.5;
+            const y2 = s.y2 + 0.5;
 
             let wrappedX = 0, wrappedY = 0;
             if (Math.max(x1, x2) > w - buffer) wrappedX = -w;
@@ -399,7 +427,6 @@ function flushRenderQueues() {
             };
 
             add(0, 0); 
-            
             if (isSplit) {
                 if (wrappedX !== 0) add(wrappedX, 0);
                 if (wrappedY !== 0) add(0, wrappedY);
@@ -407,21 +434,57 @@ function flushRenderQueues() {
             }
         }
         ctx.stroke();
+
+        // 2. Manual Round Joins
+        // We manually draw a circle at the END of every segment.
+        // This covers the 'butt' seam perfectly and creates the round join
+        // without the "sausage link" accumulation artifact.
+        ctx.beginPath();
+        for(let i = 0; i < strokes.length; i++) {
+            const s = strokes[i];
+            
+            // Only need to draw cap at x2,y2 because x1,y1 
+            // was presumably covered by the previous frame's x2,y2
+            const x2 = s.x2 + 0.5;
+            const y2 = s.y2 + 0.5;
+            
+            // Draw circle at destination
+            ctx.moveTo(x2 + radius, y2);
+            ctx.arc(x2, y2, radius, 0, Math.PI * 2);
+
+            // Handle wrapping for the caps too
+            if (x2 < buffer) {
+                ctx.moveTo(x2 + w + radius, y2);
+                ctx.arc(x2 + w, y2, radius, 0, Math.PI * 2);
+            } else if (x2 > w - buffer) {
+                ctx.moveTo(x2 - w + radius, y2);
+                ctx.arc(x2 - w, y2, radius, 0, Math.PI * 2);
+            }
+            if (y2 < buffer) {
+                ctx.moveTo(x2 + radius, y2 + w);
+                ctx.arc(x2, y2 + w, radius, 0, Math.PI * 2);
+            } else if (y2 > w - buffer) {
+                ctx.moveTo(x2 + radius, y2 - w);
+                ctx.arc(x2, y2 - w, radius, 0, Math.PI * 2);
+            }
+        }
+        ctx.fill();
+
         strokeQueue[cIdx] = []; 
     }
 }
 
 function findAndSpawnFill(crawlerList) {
-    // FIX START: Identify cells that are currently being moved INTO
+    // 1. Identify cells that are currently being moved INTO
     // These cells are logically "true" in the grid, but the line
     // has not visually reached them yet.
     const lockedCells = new Set();
     for(let c of crawlerList) {
         if(c.state === 'MOVING') {
+            // Using a simple key format "x,y"
             lockedCells.add(`${c.x},${c.y}`);
         }
     }
-    // FIX END
 
     let candidates = [];
     let weakCandidates = [];
@@ -435,10 +498,10 @@ function findAndSpawnFill(crawlerList) {
             const y = (startRow + i) % size;
             
             if (!grid[x][y]) continue;
-            
-            // FIX START: Skip if this cell is currently "under construction"
+
+            // 2. Skip if this cell is currently "under construction"
+            // This prevents the visual disconnect bug.
             if (lockedCells.has(`${x},${y}`)) continue;
-            // FIX END
 
             if (degrees[x][y] >= 3) continue;
 
@@ -446,7 +509,20 @@ function findAndSpawnFill(crawlerList) {
             for(let [k, v] of Object.entries(DIRS)) {
                 const tx = (x + v.x + size) % size;
                 const ty = (y + v.y + size) % size;
-                if (!grid[tx][ty]) validDirs.push(k);
+                if (!grid[tx][ty]) {
+                    // Also apply corner crossing check to spawn logic
+                    if (Math.abs(v.x) === 1 && Math.abs(v.y) === 1) {
+                        const n1x = (x + v.x + size) % size;
+                        const n1y = y;
+                        const n2x = x;
+                        const n2y = (y + v.y + size) % size;
+                        if (!grid[n1x][n1y] || !grid[n2x][n2y]) {
+                             validDirs.push(k);
+                        }
+                    } else {
+                        validDirs.push(k);
+                    }
+                }
             }
 
             if (validDirs.length > 0) {
@@ -455,6 +531,7 @@ function findAndSpawnFill(crawlerList) {
                     const v = DIRS[dir];
                     const tx = (x + v.x + size) % size;
                     const ty = (y + v.y + size) % size;
+                    // Check one step ahead for "strong" candidate suggestion
                     const ttx = (tx + v.x + size) % size;
                     const tty = (ty + v.y + size) % size;
                     if (!grid[ttx][tty]) strongDirs.push(dir);
