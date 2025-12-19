@@ -318,7 +318,11 @@ function startAnimation() {
             const keys = Object.keys(DIRS);
             const sDir = keys[Math.floor(Math.random() * keys.length)];
             degrees[sx][sy] = 1;
-            crawlers.push(new Crawler(sx, sy, sDir, 4, spawned % currentPalette.length));
+            
+            // Randomize starting color
+            const randomColorIdx = Math.floor(Math.random() * currentPalette.length);
+            crawlers.push(new Crawler(sx, sy, sDir, 4, randomColorIdx));
+            
             spawned++;
         }
     }
