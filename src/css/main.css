@@ -4,8 +4,8 @@
     --background2: #050726;
     --background3: #090D40;
     --foreground1: #FFF9ED;
-    --foreground2: #e9d9af;
-    --foreground3: #d3ac63;
+    --foreground2: #f5e6c0;
+    --foreground3: #e7c88e;
     --primary1: #2CE1D8;
     --primary2: #21A59E;
     --primary3: #1e7974;
@@ -22,8 +22,8 @@
 /* Dark Theme Override */
 [data-theme="light"] {
     --background1: #fffcf6;
-    --background2: #e9d9af;
-    --background3: #d3ac63;
+    --background2: #f5e6c0;
+    --background3: #e7c88e;
     --foreground1: #02020D;
     --foreground2: #050726;
     --foreground3: #090D40;
