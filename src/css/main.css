@@ -48,8 +48,8 @@ body {
     /* Roboto Mono: https://fonts.google.com/specimen/Roboto+Mono */
     font-family: "Roboto Mono", monospace;
     font-style: normal;
-    font-weight: 420;
-    font-size: large;
+    font-weight: 400;
+    font-size: medium;
 
     background-color: var(--background1);
     color: var(--foreground1);
