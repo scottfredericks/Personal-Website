@@ -4,7 +4,7 @@
 
 const CONFIG = {
     gridSize: 30,
-    strokeWidth: 5, // Kept at 5 as requested
+    strokeWidth: 5, // Kept at 5
     minSegmentLength: 4,
     maxSegmentLength: 12,
     turnProbability: 0.15,
@@ -46,7 +46,6 @@ let totalSeedSlots = 0;
 
 // BATCH QUEUES
 let strokeQueue = [];
-// caps removed (using native round)
 
 // --- CRAWLER CLASS --- 
 class Crawler {
@@ -306,7 +305,7 @@ function startAnimation() {
         if (currentJobId !== jobId) return;
 
         let active = false;
-
+        
         // 1. UPDATE
         for (let i = crawlers.length - 1; i >= 0; i--) {
             let c = crawlers[i];
@@ -315,22 +314,45 @@ function startAnimation() {
             else crawlers.splice(i, 1);
         }
 
-        // 2. FILLING
+        // 2. FILLING (Check for gaps)
         if (crawlers.length < totalSeedSlots) {
             if (findAndSpawnFill(crawlers)) active = true;
         }
         if (crawlers.length > 0) active = true;
 
-        // 3. RENDER
         if (active) {
+            // 3. RENDER
             flushRenderQueues();
+
+            // Gather heads array for light effects
+            const heads = crawlers.map(c => ({
+                x: c.animX,
+                y: c.animY,
+                c: currentPalette[c.colorIdx] 
+            }));
             
             self.createImageBitmap(offscreenCanvas).then(bitmap => {
-                self.postMessage({ type: 'render', bitmap: bitmap, id: respondingToId }, [bitmap]);
+                self.postMessage({ 
+                    type: 'render', 
+                    bitmap: bitmap, 
+                    heads: heads, 
+                    id: respondingToId 
+                }, [bitmap]);
                 
                 if (currentJobId === jobId) {
                     animationFrameId = requestAnimationFrame(loop);
                 }
+            });
+        } 
+        else {
+            // FINISHED: Send one final frame with heads: [] to turn off the lights
+            self.createImageBitmap(offscreenCanvas).then(bitmap => {
+                self.postMessage({ 
+                    type: 'render', 
+                    bitmap: bitmap, 
+                    heads: [], // <--- EMPTY HEADS ARRAY
+                    id: respondingToId 
+                }, [bitmap]);
             });
         }
     }
@@ -338,19 +360,13 @@ function startAnimation() {
     loop();
 }
 
-/**
- * Executes draw commands onto a SINGLE TILE.
- */
 function flushRenderQueues() {
     const w = PATTERN_PIXEL_SIZE;
     const buffer = CONFIG.strokeWidth * 2;
     
     ctx.lineWidth = CONFIG.strokeWidth;
-    // Native round caps are cleanest
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
-    // Default blending
     ctx.globalCompositeOperation = 'source-over';
     
     for(let cIdx = 0; cIdx < currentPalette.length; cIdx++) {
@@ -359,16 +375,12 @@ function flushRenderQueues() {
 
         const color = currentPalette[cIdx];
         ctx.strokeStyle = color;
-        // fillStyle unused
 
         ctx.beginPath();
         for(let i = 0; i < strokes.length; i++) {
             const s = strokes[i];
             
-            // PIXEL ALIGNMENT FIX FOR ODD STROKE WIDTHS
-            // Adding 0.5 centers the stroke on a grid line boundary, 
-            // ensuring the edges fall on exact integer pixels.
-            // This prevents the anti-aliased "haze" on straight lines.
+            // 0.5 Offset trick for odd widths
             const x1 = Math.floor(s.x1) + 0.5;
             const y1 = Math.floor(s.y1) + 0.5;
             const x2 = Math.floor(s.x2) + 0.5;

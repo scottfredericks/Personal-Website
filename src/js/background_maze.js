@@ -4,7 +4,7 @@
 
 (function() {
     const htmlCanvas = document.getElementById('background-maze-canvas');
-    const ctx = htmlCanvas.getContext('2d', { alpha: true }); // Standard 2D context
+    const ctx = htmlCanvas.getContext('2d', { alpha: true }); 
     const FADE_OUT_DURATION = 800; 
     const RESIZE_DEBOUNCE_TIME = 300; 
 
@@ -20,29 +20,37 @@
     let lastHeight = 0;
 
     // Rendering State
-    let currentBitmap = null; // The texture received from worker
+    let currentBitmap = null; 
+    let currentHeads = []; 
     let isRendering = false;
+
+    // Theme state
+    let currentTheme = 'dark'; 
 
     function getTheme() {
         const val = document.documentElement.getAttribute("data-theme");
         return (val === "light") ? "light" : "dark";
     }
 
-    /**
-     * Resizes the generic canvas to fit the viewport exactly.
-     * Since it is position:fixed, it matches window.inner*
-     */
     function updateCanvasSize() {
         htmlCanvas.width = window.innerWidth;
         htmlCanvas.height = window.innerHeight;
     }
 
     function triggerWorkerGeneration(type) {
-        // We no longer send dims to the worker for logic, 
-        // as the worker only cares about the pattern size.
+        const theme = getTheme();
+        currentTheme = theme; 
+        
+        // NOW we clear the old bitmap, just before we ask for a new one.
+        // This ensures the fade-out has finished (since this runs inside the timeout).
+        if (currentBitmap) {
+            currentBitmap.close();
+            currentBitmap = null;
+        }
+
         worker.postMessage({
             type: type,
-            theme: getTheme(),
+            theme: theme,
             id: currentRequestId 
         });
         
@@ -50,14 +58,14 @@
     }
 
     // --- The Main Thread Render Loop ---
-    // This tiles the available bitmap based on scroll position
     function startRenderLoop() {
         if (isRendering) return;
         isRendering = true;
         
         function frame() {
+            // Draw nothing if we have no bitmap (e.g. between fade-out finish and new load)
             if (!currentBitmap) {
-                // Keep running to catch the bitmap when it arrives
+                ctx.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
                 requestAnimationFrame(frame);
                 return;
             }
@@ -65,36 +73,71 @@
             // 1. Clear
             ctx.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
 
-            // 2. Calculate Scroll Offset
-            const patternSize = currentBitmap.width; // Should be 750px based on config
-            
-            // We want the maze to move "up" when we scroll down, naturally.
-            // wrappedY is the offset into the first tile.
-            // window.scrollY of 0 means start at 0.
-            // window.scrollY of 10 means ship everything up 10px (draw at -10).
+            // 2. Setup Pattern
+            const patternSize = currentBitmap.width; 
             const scrollY = window.scrollY;
             const offsetY = -(scrollY % patternSize);
-            const offsetX = 0; // Can extend for horizontal scroll if desired
-
-            // 3. Tile
-            // Start drawing from just above the screen to ensure no gaps
-            // We loop until we have covered height + patternSize
+            const offsetX = 0; 
+            
             const cols = Math.ceil(htmlCanvas.width / patternSize) + 1;
             const rows = Math.ceil(htmlCanvas.height / patternSize) + 2;
 
+            // 3. Draw Base Maze (Source-Over)
+            ctx.globalCompositeOperation = 'source-over';
+            
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
-                    // Coordinates might need to be shifted back if offset is positive,
-                    // but here offset is negative (moving up).
-                    // We start at -patternSize to handle the partial tile entering from top (if scrolling up)
-                    // Actually simple logic: simply grid it out.
                     const dx = c * patternSize + offsetX;
                     const dy = (r * patternSize) + offsetY;
-                    
-                    ctx.drawImage(currentBitmap, dx, dy);
+                    // Move drawing up by 1 tile height to behave like an infinite scroll buffer
+                    ctx.drawImage(currentBitmap, dx, dy - patternSize);
                 }
             }
-            
+
+            // 4. Draw Glow Effects
+            const isDark = (currentTheme === 'dark');
+            const glowRadius = isDark ? 25 : 20;
+
+            if (currentHeads && currentHeads.length > 0) {
+                if (isDark) {
+                    ctx.globalCompositeOperation = 'screen'; 
+                } else {
+                    ctx.globalCompositeOperation = 'source-over'; 
+                }
+
+                for (let c = 0; c < cols; c++) {
+                    for (let r = 0; r < rows; r++) {
+                        const ox = c * patternSize + offsetX;
+                        const oy = (r * patternSize) + offsetY - patternSize;
+
+                        for(let i = 0; i < currentHeads.length; i++) {
+                            const h = currentHeads[i];
+                            const cx = ox + h.x;
+                            const cy = oy + h.y;
+
+                            if (cx < -glowRadius || cx > htmlCanvas.width + glowRadius ||
+                                cy < -glowRadius || cy > htmlCanvas.height + glowRadius) continue;
+
+                            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
+                            
+                            if (isDark) {
+                                g.addColorStop(0, h.c); 
+                                g.addColorStop(1, "rgba(0, 0, 0, 0)");
+                                ctx.fillStyle = g;
+                            } else {
+                                g.addColorStop(0, h.c); 
+                                g.addColorStop(1, "rgba(255, 255, 255, 0)"); 
+                                ctx.fillStyle = g;
+                            }
+                            
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, glowRadius, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+
             requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
@@ -104,34 +147,34 @@
     worker.onmessage = (e) => {
         const data = e.data;
         
-        // ID Check: If this message belongs to an old request, ignore it.
+        // Critical: Ignore messages from stale requests
         if (data.id !== currentRequestId) {
-            // Close bitmap to prevent memory leaks if it was sent
             if (data.bitmap) data.bitmap.close();
             return;
         }
 
         if (data.type === 'started') {
-            // Worker is reporting restart. Reveal canvas.
             requestAnimationFrame(() => {
                htmlCanvas.classList.add('loaded');
             });
+            currentHeads = [];
         }
         else if (data.type === 'render') {
-            // Update texture
-            if (currentBitmap) currentBitmap.close(); // Cleanup old frame
+            // It's safe to close the old frame now that we have a new one
+            if (currentBitmap) currentBitmap.close(); 
             currentBitmap = data.bitmap;
+            if (data.heads) {
+                currentHeads = data.heads;
+            }
         }
     };
 
     // --- Observers ---
 
-    // 1. Init
     updateCanvasSize();
-    startRenderLoop(); // Start the painting loop immediately
-    worker.postMessage({ type: 'init', theme: getTheme() }); // No canvas passed
+    startRenderLoop(); 
+    triggerWorkerGeneration('init'); 
 
-    // 2. Resize Observer
     const observer = new ResizeObserver(() => {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -140,9 +183,9 @@
         lastWidth = w;
         lastHeight = h;
 
-        updateCanvasSize(); // Immediately resize the drawing surface
+        updateCanvasSize();
 
-        // Logic Flash Prevention
+        // 1. Invalidate - Any incoming 'render' messages from the OLD size are now stale.
         currentRequestId++; 
         clearTimeout(pendingTimeout);
 
@@ -151,7 +194,10 @@
                 triggerWorkerGeneration('resize');
             }, 100);
         } else {
+            // 2. Start Fade Out visually
             htmlCanvas.classList.remove('loaded');
+            
+            // 3. Wait for bounce, THEN generate (which clears the old bitmap)
             pendingTimeout = setTimeout(() => {
                 triggerWorkerGeneration('resize');
             }, RESIZE_DEBOUNCE_TIME);
@@ -159,7 +205,6 @@
     });
     observer.observe(document.body);
 
-    // 3. Theme Observer
     const themeObserver = new MutationObserver((mutations) => {
         let themeChanged = false;
         mutations.forEach((mutation) => {
@@ -169,13 +214,16 @@
         });
 
         if (themeChanged) {
+            // 1. Invalidate - Any incoming messages from the OLD theme are now stale.
             currentRequestId++; 
             clearTimeout(pendingTimeout);
             
             if (!isFirstLoad) {
+                // 2. Start Fade Out visually
                 htmlCanvas.classList.remove('loaded');
             }
 
+            // 3. Wait for FULL fade out (0.8s), THEN generate (which clears the old bitmap)
             pendingTimeout = setTimeout(() => {
                 triggerWorkerGeneration('themeChange');
             }, FADE_OUT_DURATION);
