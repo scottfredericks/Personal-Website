@@ -19,15 +19,15 @@ But I don't want my website to just be *fine*; I want it to be *kind of nice*. S
 
 ### Lume for Static Site Generation
 
-I don't need any server-side logic or persistent state management, so a static site should do the trick. See https://lume.land/docs/overview/why-static-sites/ for a bit more justification. Using a more complex web app framework might provide some good practice, but it would be overkill for the current size of the site.
+I don't need any server-side logic or persistent state management, so a static site should do the trick. See [Lume's explanation](https://lume.land/docs/overview/why-static-sites/) for more justification. Using a more complex web app framework might provide some good practice, but it would be overkill for the current size of the site.
 
-I could continue using raw HTML and CSS, but that's no fun. I might also want to add a blog at some point (right now, for instance). So let's try out a static site generator. There are a lot of options, but I ended up using [Lume](https://lume.land/) for a few reasons:
+I could continue using raw HTML and CSS, but that's no fun. I might also want to add a blog at some point (right now, for instance). So let's try out a static site generator.
+
+There are a lot of options, but I ended up using [Lume](https://lume.land/) for a few reasons:
 
 - I wanted to try out Deno (I've used Node briefly and it works, but it can be a bit slow and cluttered).
 - I wanted to be able to use TypeScript and React for any client-side logic, mostly just for learning purposes.
 - I don't want the site to contain any unnecessary JavaScript, other than logic I explicitly add myself.
-
-Besides, for a project of this size, the specific tool shouldn't matter too much, so Lume it is.
 
 ### GitHub for Project Management and Hosting
 
@@ -47,7 +47,7 @@ AWS S3 also works fine and is fairly inexpensive, but if I can host the site for
 
 OK, let's get started by [installing Lume](https://lume.land/docs/overview/installation/) and setting up the project skeleton.
 
-First, we'll need to [install Deno](https://docs.deno.com/runtime/getting_started/installation/). On Windows, using non-admin powershell:
+First, we'll need to [install Deno](https://docs.deno.com/runtime/getting_started/installation/). On Windows, using non-admin PowerShell:
 
 ```powershell
 irm https://deno.land/install.ps1 | iex
@@ -129,7 +129,7 @@ This generates a very basic HTML file at the site root and opens it in the brows
 
 ![Viewing in the browser for the first time](/img/blog/personal-website/index_page_in_browser.png)
 
-If you're not familiar with Markdown, it'ss just a simple markup language that's liked by developers because it's easy to edit from a text editor, and it's easy to picture how the rendered version will look based on the text version. For example, this Markdown:
+If you're not familiar with Markdown, it's just a simple markup language that's liked by developers because it's easy to edit from a text editor, and it's easy to picture how the rendered version will look based on the text version. For example, this Markdown:
 
 ```md
 # Level One Header

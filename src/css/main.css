@@ -15,7 +15,7 @@
     --accent1: #FFDF30;
     --accent2: #E3B542;
     --accent3: #C98B3A;
-    --backdrop1: #02020dbe;
+    --backdrop1: #02020dde;
     --backdrop2: #02020d5b;
 }
 
@@ -36,7 +36,7 @@
     --accent1: #463012;
     --accent2: #7A541F;
     --accent3: #9D6B27;
-    --backdrop1: #fffefbef;
+    --backdrop1: #fffefbf5;
     --backdrop2: #fff8e91e;
 }
 
@@ -46,7 +46,7 @@ body {
     /* Roboto Mono: https://fonts.google.com/specimen/Roboto+Mono */
     font-family: "Roboto Mono", monospace;
     font-style: normal;
-    font-weight: 400;
+    font-weight: 420;
     font-size: large;
 
     background-color: var(--background1);
