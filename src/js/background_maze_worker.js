@@ -11,9 +11,9 @@ const CONFIG = {
     chanceToBranch: 0.08,
     colorChangeRate: 15,
     growthSpeed: 1.0, 
-    seedDensityArea: 160,
-    tileMultiplier: 7,
-    baseDensityUnit: 15
+    seedDensityArea: 200,
+    tileMultiplier: 9,
+    baseDensityUnit: 9
 };
 
 // Size calculations
