@@ -1,10 +1,13 @@
-:root {
-  --navbar-height: 65px;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
 }
 
-/* Offset the rest of the content to fit the navbar */
 body {
-  padding-top: var(--navbar-height);
+    /* This pushes the actual content (text) down so it isn't hidden by the navbar */
+    padding-top: var(--navbar-height);
 }
 
 .navbar {
