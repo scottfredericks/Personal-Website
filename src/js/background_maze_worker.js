@@ -4,16 +4,16 @@
 
 const CONFIG = {
     gridSize: 30,
-    strokeWidth: 5, // Kept at 5
+    strokeWidth: 5,
     minSegmentLength: 4,
     maxSegmentLength: 12,
     turnProbability: 0.15,
     chanceToBranch: 0.08,
     colorChangeRate: 15,
     growthSpeed: 1.0, 
-    seedDensityArea: 196,
-    tileMultiplier: 8,
-    baseDensityUnit: 7
+    seedDensityArea: 160,
+    tileMultiplier: 7,
+    baseDensityUnit: 15
 };
 
 // Size calculations
