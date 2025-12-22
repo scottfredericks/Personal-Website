@@ -18,7 +18,7 @@
     --accent2: #e3b842;
     --accent3: #C98B3A;
     --backdrop1: #02020dde;
-    --backdrop2: #02020d33;
+    --backdrop2: #02020d88;
 }
 
 /* Dark Theme Override */
@@ -39,17 +39,17 @@
     --accent2: #7A541F;
     --accent3: #9D6B27;
     --backdrop1: #fffefbf5;
-    --backdrop2: #fff8e91e;
+    --backdrop2: #fff8e988;
 }
 
 /* Main styling and layout */
 
 body {
-    /* Roboto Mono: https://fonts.google.com/specimen/Roboto+Mono */
-    font-family: "Roboto Mono", monospace;
+    /* Lato: https://fonts.google.com/specimen/Lato */
+    font-family: "Lato", sans-serif;
     font-style: normal;
     font-weight: 400;
-    font-size: medium;
+    font-size: large;
 
     background-color: var(--background1);
     color: var(--foreground1);

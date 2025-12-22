@@ -4,7 +4,7 @@
 
 const CONFIG = {
     gridSize: 30,
-    strokeWidth: 5,
+    strokeWidth: 4,
     minSegmentLength: 4,
     maxSegmentLength: 12,
     turnProbability: 0.15,
