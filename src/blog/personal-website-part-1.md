@@ -1,7 +1,7 @@
 ---
-title: Building a Personal Website Using Lume and GitHub Pages
+title: "Building a Personal Website - Part 1: Using Lume"
 ---
-# Building a Personal Website Using Lume and GitHub Pages
+# "Building a Personal Website - Part 1: Using Lume"
 
 *See the source repo [here](https://github.com/scottfredericks/Personal-Website).*
 
@@ -9,7 +9,7 @@ The situation: I know enough HTML, CSS, and JavaScript to cobble a few pages tog
 
 Enter: an early version of my personal website:
 
-![Early version of the website](/img/blog/personal-website/website-v1.png)
+![Early version of the website](/img/blog/personal-website-part-1website-v1.png)
 
 It's... fine. It gets the job done, and it shows potential employers that I know how to Google things.
 
@@ -127,7 +127,7 @@ lume -s -w
 
 This generates a very basic HTML file at the site root and opens it in the browser:
 
-![Viewing in the browser for the first time](/img/blog/personal-website/index_page_in_browser.png)
+![Viewing in the browser for the first time](/img/blog/personal-website-part-1index_page_in_browser.png)
 
 If you're not familiar with Markdown, it's just a simple markup language that's liked by developers because it's easy to edit from a text editor, and it's easy to picture how the rendered version will look based on the text version. For example, this Markdown:
 
@@ -168,7 +168,7 @@ produces this HTML:
 
 and looks like this in the browser:
 
-![Markdown conversion](/img/blog/personal-website/markdown_conversion.png)
+![Markdown conversion](/img/blog/personal-website-part-1markdown_conversion.png)
 
 OK, it works! But it's very ugly. We should add some CSS to make it less ugly. But before we can do that, we need to understand how Lume handles layouts, templates, and other resources (including CSS files).
 
@@ -225,7 +225,7 @@ Note that `title` here is also a variable, but it doesn't have the same built-in
 
 Now the page includes the `h1` element added by the layout, and uses the page title defined at the top of `index.md`:
 
-![HTML using a Vento layout](/img/blog/personal-website/html_vento_layout.png)
+![HTML using a Vento layout](/img/blog/personal-website-part-1html_vento_layout.png)
 
 ### Default Data
 
@@ -279,7 +279,7 @@ This recursively adds all files in the `src/css` folder.
 
 Now `css/main.css` should be added to the `_site` folder, and we should see the updated styling in the output:
 
-![HTML with CSS](/img/blog/personal-website/html_with_css.png)
+![HTML with CSS](/img/blog/personal-website-part-1html_with_css.png)
 
 Note that when we apply styling, we want to target the HTML elements that get generated in the final output, and not the literal contents of the Markdown files themselves. Remember: the website consists of everything that gets output to the `_site` folder, and nothing else.
 
@@ -312,43 +312,3 @@ site.add("/img");
 This will insert an `<img>` tag using the image into the output HTML.
 
 Great! After all of this setup, we have all of the same functionality that raw HTML/CSS/JavaScript has, but now with templating and live updates. Now we can focus on the actual content of the site.
-
-## Designing a Theme
-
-### Background
-
-The old layout was a bit boring. I like simplicity and neutral tones, but I wanted more individuality and better use of accents. I also wanted to combine the unique parts of my background in a sleek, modern way.
-
-I've had Alaska on my mind lately, and being [Unangax̂](https://en.wikipedia.org/wiki/Aleuts) (an Alaska native from the Aleutian islands, AKA "Aleut"), I wanted to see if I could incorporate some of the traditional art style into the design.
-
-This style uses a few traditional colors including black, red, teal, white, and to a lesser extent brown or faded orange as a stand-in for wood or hide. The shapes tend to be large, swirling, almost psychadelic patterns that ending in curves, spirals, or sharp points. Here's a traditional hunting hat to give you the general idea:
-
-![Aleut Hunting Hat](https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Hunting_hat%2C_Aleut_-_Ethol%C3%A9n_collection%2C_Museum_of_Cultures_%28Helsinki%29_-_DSC04917.JPG/960px-Hunting_hat%2C_Aleut_-_Ethol%C3%A9n_collection%2C_Museum_of_Cultures_%28Helsinki%29_-_DSC04917.JPG)
-
-At the same time, I wanted to give a modern sense of digitality and general "computer-y-ness", with some inspiration from physics and computational science. I also really like the simplicity of a dark theme with a gradient, as demonstrated in [Brittany Chang's portfolio website](https://brittanychiang.com/).
-
-I ended up with some JavaScript code to procedurally generate a maze-like pattern with traditional Aleut colors. I also decided to add a dark gradient over the top to reduce the sense of clutter, and to use light brown as an accent color in the foreground. This background can be rendered in a canvas element in the background, with the rendering logic in a separate script file.
-
-We also want the background to stay fixed while the rest of the content scrolls over it. We can use `position::fixed` to keep the canvas separate from the rest of the rendering, and make the canvas take up 100% of the screen.
-
-This can be added to the main HTML template with just a few lines:
-
-```html
-TODO
-```
-
-## Adding a Blog Post
-
-TODO
-
-## Automating the Build
-
-TODO
-
-## Setting up GitHub Pages
-
-TODO
-
-## Using a Custom Domain
-
-TODO
