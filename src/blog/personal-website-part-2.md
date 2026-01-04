@@ -1,7 +1,7 @@
 ---
 title: "Building a Personal Website - Part 2: Designing a Theme"
 ---
-# "Building a Personal Website - Part 2: Designing a Theme"
+# Building a Personal Website - Part 2: Designing a Theme
 
 *See the source repo [here](https://github.com/scottfredericks/Personal-Website).*
 

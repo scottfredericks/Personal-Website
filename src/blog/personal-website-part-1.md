@@ -1,7 +1,7 @@
 ---
 title: "Building a Personal Website - Part 1: Using Lume"
 ---
-# "Building a Personal Website - Part 1: Using Lume"
+# Building a Personal Website - Part 1: Using Lume
 
 *See the source repo [here](https://github.com/scottfredericks/Personal-Website).*
 
@@ -9,7 +9,7 @@ The situation: I know enough HTML, CSS, and JavaScript to cobble a few pages tog
 
 Enter: an early version of my personal website:
 
-![Early version of the website](/img/blog/personal-website-part-1website-v1.png)
+![Early version of the website](/img/blog/personal-website-part-1/website-v1.png)
 
 It's... fine. It gets the job done, and it shows potential employers that I know how to Google things.
 
@@ -127,7 +127,7 @@ lume -s -w
 
 This generates a very basic HTML file at the site root and opens it in the browser:
 
-![Viewing in the browser for the first time](/img/blog/personal-website-part-1index_page_in_browser.png)
+![Viewing in the browser for the first time](/img/blog/personal-website-part-1/index_page_in_browser.png)
 
 If you're not familiar with Markdown, it's just a simple markup language that's liked by developers because it's easy to edit from a text editor, and it's easy to picture how the rendered version will look based on the text version. For example, this Markdown:
 
@@ -168,7 +168,7 @@ produces this HTML:
 
 and looks like this in the browser:
 
-![Markdown conversion](/img/blog/personal-website-part-1markdown_conversion.png)
+![Markdown conversion](/img/blog/personal-website-part-1/markdown_conversion.png)
 
 OK, it works! But it's very ugly. We should add some CSS to make it less ugly. But before we can do that, we need to understand how Lume handles layouts, templates, and other resources (including CSS files).
 
@@ -225,7 +225,7 @@ Note that `title` here is also a variable, but it doesn't have the same built-in
 
 Now the page includes the `h1` element added by the layout, and uses the page title defined at the top of `index.md`:
 
-![HTML using a Vento layout](/img/blog/personal-website-part-1html_vento_layout.png)
+![HTML using a Vento layout](/img/blog/personal-website-part-1/html_vento_layout.png)
 
 ### Default Data
 
@@ -279,7 +279,7 @@ This recursively adds all files in the `src/css` folder.
 
 Now `css/main.css` should be added to the `_site` folder, and we should see the updated styling in the output:
 
-![HTML with CSS](/img/blog/personal-website-part-1html_with_css.png)
+![HTML with CSS](/img/blog/personal-website-part-1/html_with_css.png)
 
 Note that when we apply styling, we want to target the HTML elements that get generated in the final output, and not the literal contents of the Markdown files themselves. Remember: the website consists of everything that gets output to the `_site` folder, and nothing else.
 

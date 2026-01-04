@@ -1,3 +1,6 @@
+---
+title: Blog
+---
 # Blog
 
 ## (under construction)
