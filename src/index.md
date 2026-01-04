@@ -1,45 +1,33 @@
 ---
-title: Scott Fredericks - About Me
+title: About Me
 ---
-# Hi! I'm Scott Fredericks
+# Hi, I'm Scott Fredericks
+
+![(Profile Picture)](/img/main/profile.jpg) {: style="text-align:center;max-width:25%;margin:auto"}
 
 **I like solving interesting problems and making cool stuff** {: style="text-align:center"}
 
 ## My Approach
 
-I use physics, math, and code to find creative solutions to challenging problems. In a highly specialized and rapidly changing world, adaptability is essential. Leveraging a variety of backgrounds helps you find and create better tools and use them more effectively.
-
-Physics has taught me that when you truly understand a problem, the solution follows naturally. My passion is modeling complex systems in a way that produces generalized solutions, but preserves the nuance that makes such systems worth studying in the first place. 
-
-See [my projects](/projects) for some examples of what I've worked on.
+I use code, math, and intuition to find creative solutions to challenging problems. In a highly specialized and rapidly changing world, adaptability is essential. Leveraging a variety of backgrounds makes you better at finding, creating, and using the right tools.
 
 ## My Interests
 
 ### Programming
 
-I like to focus on creating systems, but I also enjoy designing and implementing end-to-end features. I have a soft spot for fine details in UI and UX work.
+My main language is Python, but I've also worked with JavaScript, C++, and Lua. I'm currently learning Rust and TypeScript/React for personal projects, and would like to use them in production.
 
-My main language is Python, but I also have experience with JavaScript, C++, and Lua. I'm also learning Rust and TypeScript/React for personal projects. I'm generally eager to adopt new languages and technologies as needed.
+I also have experience with testing, DevOps, feature planning, and UX.
 
-I have dedicated experience with testing, and like to take a test-driven approach to development. If you plan to do something more than once, automate it.
-
-See [my experience](/experience) for more info on my development background.
+See [my GitHub](https://github.com/scottfredericks) for more info.
 
 ### Physics and Mathematics
 
-TODO
+As a physicist, my main interest is in foundational theory, particulary in generalizing [geometrodynamics](https://en.wikipedia.org/wiki/Geometrodynamics) to describe quantum interactions.
 
-### Computer Science and AI
+I would also like to better understand [noncommuatative geometry](https://en.wikipedia.org/wiki/Noncommutative_geometry) and its potential applications.
 
-TODO
-
-### Education
-
-TODO
-
-### Game Dev
-
-TODO
+For my masters thesis, I worked on [PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in computational molecular crystallography.
 
 ## Where to Find Me
 
