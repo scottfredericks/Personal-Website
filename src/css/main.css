@@ -74,7 +74,12 @@ main {
     max-width: 900px;
     margin: 0 auto;
     padding: 50px 50px;
-    background: linear-gradient(to right, transparent 0%, var(--backdrop1) 2%, var(--backdrop1) 98%, transparent 100%);
+
+    background: var(--backdrop1);
+    mask-image: linear-gradient(to bottom, black 0%, black 98%, transparent),
+                linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+    mask-composite: intersect; /* For modern browsers */
+    -webkit-mask-composite: source-in; /* For older WebKit */
 }
 
 h1 {
