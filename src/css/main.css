@@ -73,13 +73,30 @@ main {
     width: 70%;
     max-width: 900px;
     margin: 0 auto;
-    padding: 50px 50px;
+    padding: 75px 75px;
 
     background: var(--backdrop1);
-    mask-image: linear-gradient(to bottom, black 0%, black 98%, transparent),
-                linear-gradient(to right, transparent, black 2%, black 98%, transparent);
-    mask-composite: intersect; /* For modern browsers */
+
+    --mask-vert: linear-gradient(to bottom, 
+        transparent 0px, 
+        black 50px, 
+        black calc(100% - 50px), 
+        transparent 100%
+    );
+
+    --mask-horiz: linear-gradient(to right, 
+        transparent 0px, 
+        black 50px, 
+        black calc(100% - 50px), 
+        transparent 100%
+    );
+
+
+    -webkit-mask-image: var(--mask-vert), var(--mask-horiz);
+    mask-image: var(--mask-vert), var(--mask-horiz);
+
     -webkit-mask-composite: source-in; /* For older WebKit */
+    mask-composite: intersect; /* For modern browsers */
 }
 
 h1 {
