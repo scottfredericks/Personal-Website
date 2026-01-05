@@ -3,8 +3,6 @@ title: About Me
 ---
 # Hi, I'm Scott Fredericks
 
-<!-- ![(Profile Picture)](/img/main/profile.jpg) {: style="text-align:center;max-width:25%;margin:auto"} -->
-
 **I like solving interesting problems and making cool stuff** {: style="text-align:center"}
 
 ## My Approach
