@@ -3,7 +3,7 @@
     --navbar-height: 65px;
 
     --background1: #02020D;
-    --background2: #050726;
+    --background2: #03051a;
     --background3: #090D40;
     --foreground1: #FFF9ED;
     --foreground2: #f5e6c0;
@@ -11,35 +11,32 @@
     --primary1: #2CE1D8;
     --primary2: #21A59E;
     --primary3: #1e7974;
-    --secondary1: #fd5b5b;
-    --secondary2: #9E3D33;
-    --secondary3: #6B2A22;
     --accent1: #ffe91f;
     --accent2: #f0be1d;
     --accent3: #cf9a09;
     --backdrop1: #02020dde;
-    --backdrop2: #02020d88;
+    --backdrop2: #02020d79;
 }
 
 /* Dark Theme Override */
 [data-theme="light"] {
-    --background1: #fffcf6;
-    --background2: #f5e6c0;
-    --background3: #e7c88e;
+    --background1: #f8e9ca;
+    --background2: #fae5b1;
+    --background3: #eec67c;
     --foreground1: #02020D;
     --foreground2: #050726;
     --foreground3: #090D40;
     --primary1: #fd5b5b;
     --primary2: #9E3D33;
     --primary3: #6B2A22;
-    --secondary1: #2CE1D8;
-    --secondary2: #21A59E;
-    --secondary3: #1e7974;
-    --accent1: #463012;
-    --accent2: #7A541F;
-    --accent3: #9D6B27;
+    --accent1: #148882;
+    --accent2: #1c8d87;
+    --accent3: #21A59E;
+    /* --accent1: #21A59E;
+    --accent2: #1c8d87;
+    --accent3: #20837e; */
     --backdrop1: #fffefbf5;
-    --backdrop2: #fff8e988;
+    --backdrop2: #f7f3ea88;
 }
 
 /* Main styling and layout */
@@ -77,17 +74,16 @@ main {
 
     background: var(--backdrop1);
 
-    --mask-vert: linear-gradient(to bottom, 
-        transparent 0px, 
-        black 50px, 
-        black calc(100% - 50px), 
+    --mask-vert: linear-gradient(to bottom,
+        black 0px,
+        black calc(100% - 50px),
         transparent 100%
     );
 
     --mask-horiz: linear-gradient(to right, 
         transparent 0px, 
-        black 50px, 
-        black calc(100% - 50px), 
+        black 30px, 
+        black calc(100% - 30px), 
         transparent 100%
     );
 
