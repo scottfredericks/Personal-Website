@@ -1,0 +1,46 @@
+---
+title: Blog
+layout: main.html.vto
+url: /blog/
+---
+
+<h1>Latest Articles</h1>
+
+{{# Get list of articles based on tag, in descending date order #}}
+{{ set articles = search.pages("blog_article", "date=desc") }}
+{{ set currentYear = null }}
+
+{{ for article of articles }}
+  {{# Check whether the year has changed #}}
+  {{ set articleYear = article.date.getFullYear() }}
+
+  {{ if articleYear != currentYear }}
+    {{# Close previous years if this isn't the first year #}}
+    {{ if currentYear != null }}
+      </ul>
+    {{ /if }}
+
+    {{# Create a section for the new year #}}
+    <h2>{{ articleYear }}</h2>
+    <ul>
+
+    {{ set currentYear = articleYear }}
+  {{ /if }}
+
+  {{# Render each article #}}
+  <li>
+    <article>
+      <p>
+        <time datetime="{{ article.date |> date('DATE') }}">
+          {{ article.date |> date('HUMAN_DATE') }}
+        </time> - 
+        <a href="{{ article.url }}">{{ article.title }}</a>
+      </p>
+    </article>
+  </li>
+{{ /for }}
+
+{{# Close the last list tag if there were any articles #}}
+{{ if articles.length > 0 }}
+  </ul>
+{{ /if }}

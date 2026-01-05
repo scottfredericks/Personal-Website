@@ -1,4 +1,5 @@
 import lume from "lume/mod.ts";
+import date from "lume/plugins/date.ts"; // Used by blog list
 
 const site = lume({
     src: "./src",
@@ -15,5 +16,7 @@ const site = lume({
 site.add("/css");
 site.add("/js");
 site.add("/img");
+
+site.use(date());
 
 export default site;

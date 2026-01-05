@@ -1,5 +1,7 @@
 ---
 title: "Building a Personal Website - Part 2: Designing a Theme"
+date: 2026-01-06 12:00
+tags: [blog_article]
 ---
 # Building a Personal Website - Part 2: Designing a Theme
 
