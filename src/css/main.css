@@ -73,8 +73,8 @@ main {
     width: 70%;
     max-width: 900px;
     margin: 0 auto;
-    padding: 100px 20px;
-    background: var(--backdrop1);
+    padding: 50px 50px;
+    background: linear-gradient(to right, transparent 0%, var(--backdrop1) 2%, var(--backdrop1) 98%, transparent 100%);
 }
 
 h1 {
