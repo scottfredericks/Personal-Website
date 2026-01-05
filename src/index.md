@@ -15,11 +15,9 @@ I use code, math, and intuition to find creative solutions to challenging proble
 
 ### Programming
 
-My main language is Python, but I've also worked with JavaScript, C++, and Lua. I'm currently learning Rust and TypeScript/React for personal projects, and would like to use them in production.
+My main language is Python, but I've also worked with JavaScript, C++, and other languages. I'm currently learning Rust and TypeScript/React for personal projects, and would like to use them in production.
 
-I also have experience with testing, DevOps, feature planning, and UX.
-
-See [my GitHub](https://github.com/scottfredericks) for more info.
+I also have professional experience with testing, DevOps, feature planning, and UX.
 
 ### Physics and Mathematics
 
@@ -27,7 +25,7 @@ As a physicist, my main interest is in foundational theory, particulary in gener
 
 I would also like to better understand [noncommuatative geometry](https://en.wikipedia.org/wiki/Noncommutative_geometry) and its potential applications.
 
-For my masters thesis, I worked on [PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in computational molecular crystallography.
+For my masters thesis, I authored [PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in computational molecular crystallography. I also published [an article](https://www.sciencedirect.com/science/article/abs/pii/S0010465520304057) outlining the work.
 
 ## Where to Find Me
 
