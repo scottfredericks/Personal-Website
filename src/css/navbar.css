@@ -6,8 +6,8 @@ html, body {
 }
 
 body {
-    /* This pushes the actual content (text) down so it isn't hidden by the navbar */
-    padding-top: var(--navbar-height);
+  /* This pushes the actual content (text) down so it isn't hidden by the navbar */
+  padding-top: var(--navbar-height);
 }
 
 .navbar {
@@ -16,7 +16,7 @@ body {
   left: 0;
   width: 100%;
   height: var(--navbar-height);
-  z-index: 1000; 
+  z-index: 1000;
 
   /* 
      UPDATE: 
@@ -24,7 +24,7 @@ body {
      so the text is always legible.
   */
   background-color: var(--background2);
-  
+
   /* Remove the pointer-events rule here, default is fine */
 }
 
@@ -39,10 +39,10 @@ body {
   top: 100%; /* Starts exactly at the bottom of the navbar */
   left: 0;
   width: 100%;
-  height: 10px; 
+  height: 10px;
   background: linear-gradient(
-    to bottom, 
-    var(--background2) 0%, 
+    to bottom,
+    var(--background2) 0%,
     transparent 100%
   );
   pointer-events: none; /* Crucial: lets users click content underneath the fade */
@@ -64,7 +64,7 @@ body {
   margin: 0;
   font-size: 1.5rem;
   font-weight: bold;
-  line-height: 1; 
+  line-height: 1;
 }
 
 /* Menu Links Styling */
@@ -83,8 +83,11 @@ body {
   transition: opacity 0.2s ease;
 }
 
-.nav-content a:link, .nav-content a:visited, .nav-content a:hover, .nav-content a:active {
-    color: var(--accent1);
+.nav-content a:link,
+.nav-content a:visited,
+.nav-content a:hover,
+.nav-content a:active {
+  color: var(--accent1);
 }
 
 .nav-link:hover {

@@ -30,6 +30,9 @@ TODO
 
 Copyright Scott Fredericks 2026.
 
-The source code for this website is provided under the [MIT license](https://opensource.org/license/mit).
+The source code for this website is provided under the
+[MIT license](https://opensource.org/license/mit).
 
-The [Lato font](https://fonts.google.com/specimen/Lato) was designed by Łukasz Dziedzic and is provided under the [SIL Open Font License, Version 1.1](https://openfontlicense.org/open-font-license-official-text/).
+The [Lato font](https://fonts.google.com/specimen/Lato) was designed by Łukasz
+Dziedzic and is provided under the
+[SIL Open Font License, Version 1.1](https://openfontlicense.org/open-font-license-official-text/).
