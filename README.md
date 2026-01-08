@@ -10,7 +10,50 @@ Blog articles on the live website give more information about its creation.
 - [Lume](https://lume.land/docs/overview/installation/)
 - [Lume CLI](https://lume.land/docs/overview/command-line/) (optional)
 
-## Deployment
+## Dev and Deployment
+
+### Linting and Formatting
+
+Use `deno lint` and then `deno fmt`.
+
+Settings are in `deno.json`.
+
+<details>
+
+<summary>Optional pre-commit hook</summary>
+<!-- deno-lint-ignore-start -->
+```bash
+#!/bin/sh
+
+echo "Deno git hook running..."
+
+deno fmt
+
+if ! git diff --quiet; then
+echo "FAILED - FORMATTING APPLIED"
+echo " Deno formatted some files. Please review the changes,"
+echo " run 'git add', and commit again."
+exit 1
+fi
+
+if ! deno lint; then
+echo "FAILED - LINTING FAILED"
+echo " Please fix the logic errors above."
+exit 1
+fi
+
+exit 0
+
+````
+<!-- deno-lint-ignore-end -->
+
+then run:
+
+```shell
+chmod +x .git/hooks/pre-commit
+````
+
+</details>
 
 ### Local Dev Deployment
 
