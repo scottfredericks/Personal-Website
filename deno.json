@@ -65,5 +65,9 @@
       ]
     }
   },
-  "lock": false
+  "lock": false,
+  "fmt": {
+    "lineWidth": 80,
+    "proseWrap": "preserve"
+  }
 }
