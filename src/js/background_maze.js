@@ -1,21 +1,16 @@
-/**
- * /js/background_maze.js
- */
-
 (function() {
     const htmlCanvas = document.getElementById('background-maze-canvas');
-    // NEW: Get reference to the container
     const container = document.getElementById('background-maze-div');
 
     const ctx = htmlCanvas.getContext('2d', { alpha: true }); 
     const FADE_OUT_DURATION = 800; 
     const RESIZE_DEBOUNCE_TIME = 300; 
-    const AUTO_REGEN_DELAY = 1000; // Time to wait after generation finishes
+    const AUTO_REGEN_DELAY = 1000;
 
     const worker = new Worker('/js/background_maze_worker.js'); 
     
     let pendingTimeout;
-    let autoRegenTimeout; // Tracks the "wait and fade" logic
+    let autoRegenTimeout;
     let isFirstLoad = true;
     let currentRequestId = 0;
 
@@ -100,7 +95,6 @@
                 }
             }
 
-            // ... (Drawing Effects Code remains exactly the same as your file) ...
             const isDark = (currentTheme === 'dark');
             const glowRadius = isDark ? 25 : 20;
 
@@ -170,10 +164,10 @@
         }
         else if (data.type === 'finished') {
             // Maze generation is complete. 
-            // 1. Wait for AUTO_REGEN_DELAY (1 sec)
-            // 2. Remove loaded class (fade out)
-            // 3. Wait for FADE_OUT_DURATION (0.8 sec)
-            // 4. Trigger regenerate
+            //   Wait for AUTO_REGEN_DELAY
+            //   Remove loaded class (fade out)
+            //   Wait for FADE_OUT_DURATION
+            //   Trigger regenerate
             
             autoRegenTimeout = setTimeout(() => {
                 htmlCanvas.classList.remove('loaded');
@@ -194,8 +188,6 @@
     startRenderLoop(); 
     triggerWorkerGeneration('init'); 
 
-    // UPDATED: Observe the container (div), NOT the body.
-    // This prevents re-triggers when content loads, unless the viewport technically resizes.
     const observer = new ResizeObserver(() => {
         // Measure client dimensions of the container
         const w = container.clientWidth;
@@ -209,7 +201,7 @@
 
         currentRequestId++; 
         clearTimeout(pendingTimeout);
-        clearTimeout(autoRegenTimeout); // Stop any pending fade-outs
+        clearTimeout(autoRegenTimeout);
 
         if (isFirstLoad) {
             pendingTimeout = setTimeout(() => {
@@ -222,7 +214,6 @@
             }, RESIZE_DEBOUNCE_TIME);
         }
     });
-    // UPDATED: Observe container
     observer.observe(container);
 
     const themeObserver = new MutationObserver((mutations) => {
@@ -236,7 +227,7 @@
         if (themeChanged) {
             currentRequestId++; 
             clearTimeout(pendingTimeout);
-            clearTimeout(autoRegenTimeout); // Stop any pending fade-outs
+            clearTimeout(autoRegenTimeout);
             
             if (!isFirstLoad) {
                 htmlCanvas.classList.remove('loaded');
