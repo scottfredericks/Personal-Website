@@ -4,8 +4,7 @@ title: About Me
 
 # Hi! I'm Scott Fredericks
 
-**I like solving interesting problems and making cool stuff.** {:
-style="text-align:center"}
+**I like solving interesting problems and making cool stuff.** {: style="text-align:center"}
 
 ## My Approach
 
