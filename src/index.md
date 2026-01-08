@@ -23,7 +23,7 @@ As a physicist, my main interest is in foundational theory, particulary in gener
 
 I would also like to better understand [noncommuatative geometry](https://en.wikipedia.org/wiki/Noncommutative_geometry) and its potential applications.
 
-For my masters thesis, I authored [PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in computational molecular crystallography. I also published [an article](https://www.sciencedirect.com/science/article/abs/pii/S0010465520304057) outlining the work.
+For my masters thesis, I authored [PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in computational molecular crystallography. I also published an article outlining the work.
 
 ## Where to Find Me
 

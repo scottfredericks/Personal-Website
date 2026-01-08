@@ -480,13 +480,14 @@ Running this with a single blog article `md` file, we get this:
 
 ![Rendered blog article list](/img/blog/personal-website-part-1/blog_article_list.png)
 
-Excellent! Lastly, we want every blog article to include the publication date at the top. To do this, we'll create `src/_includes/blog_article.html.vto`. It will be nearly identical to our main layout, but before the content, we will insert a single line with the date:
+Excellent! Lastly, we want every blog article to include the publication date at the top. To do this, we'll create `src/_includes/blog_article.html.vto`. It will be nearly identical to our main layout (which we can inherit), but before the content, we'll insert a single line with the date:
 
 ```html
-    <main>
-      <em>{{ date |> date('HUMAN_DATE') }}</em><br/>
-      {{ content }}
-    </main>
+---
+layout: main.html.vto
+---
+<em>{{ date |> date('HUMAN_DATE') }}</em><br/>
+{{ content }}
 ```
 
 To apply this to all blog articles, we create `src/blog/_data.yml`:

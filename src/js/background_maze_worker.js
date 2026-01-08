@@ -10,7 +10,7 @@ const CONFIG = {
     turnProbability: 0.15,
     chanceToBranch: 0.08,
     colorChangeRate: 15,
-    growthSpeed: 1.0, 
+    growthSpeed: 0.75, 
     seedDensityArea: 200,
     tileMultiplier: 9,
     baseDensityUnit: 9
