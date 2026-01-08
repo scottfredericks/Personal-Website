@@ -21,37 +21,38 @@ Settings are in `deno.json`.
 <details>
 
 <summary>Optional pre-commit hook</summary>
-<!-- deno-lint-ignore-start -->
+
+<!-- deno-fmt-ignore-start -->
 ```bash
 #!/bin/sh
 
 echo "Deno git hook running..."
 
-deno fmt
+deno fmt --quiet
 
 if ! git diff --quiet; then
-echo "FAILED - FORMATTING APPLIED"
-echo " Deno formatted some files. Please review the changes,"
-echo " run 'git add', and commit again."
-exit 1
+    echo "FAILED - FORMATTING APPLIED"
+    echo "   Deno formatted some files. Please review the changes,"
+    echo "   run 'git add', and commit again."
+    exit 1
 fi
 
-if ! deno lint; then
-echo "FAILED - LINTING FAILED"
-echo " Please fix the logic errors above."
-exit 1
+if ! deno lint --quiet; then
+    echo "FAILED - LINTING FAILED"
+    echo "   Please fix the logic errors above."
+    exit 1
 fi
 
 exit 0
+```
 
-````
-<!-- deno-lint-ignore-end -->
+<!-- deno-fmt-ignore-end -->
 
 then run:
 
 ```shell
 chmod +x .git/hooks/pre-commit
-````
+```
 
 </details>
 
