@@ -65,5 +65,12 @@
       ]
     }
   },
-  "lock": false
+  "lock": false,
+  "fmt": {
+    "lineWidth": 80,
+    "proseWrap": "preserve",
+    "exclude": [
+      "src/blog/index.html.vto"
+    ]
+  }
 }
