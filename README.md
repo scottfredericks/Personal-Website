@@ -1,19 +1,38 @@
 # Scott Fredericks Personal Website
 
-A simple resume/portfolio website using HTML and CSS. The site is hosted using an AWS S3 bucket and uses CloudFront for the domain.
+This is a personal static website generated using [Lume](https://lume.land/).
 
-The site is live at [https://www.scottfredericks.com/](https://www.scottfredericks.com)
+Blog articles on the live website give more information about its creation.
 
 ## Prerequisites
 
-Install [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
-
-Run `aws configure` once on each device to set credentials.
+- [Deno](https://docs.deno.com/runtime/getting_started/installation/)
+- [Lume](https://lume.land/docs/overview/installation/)
+- [Lume CLI](https://lume.land/docs/overview/command-line/) (optional)
 
 ## Deployment
 
-Run `./scripts/deploy.sh` to upload all site content to s3 and invalidate the cache.
+### Local Dev Deployment
 
-Add the `-y` flag for automated CI: `./scripts/deploy.sh -y`
+After installing the prerequisites, run:
 
-Note: Double-check the `--include` and `--exclude` options used by the deployment script when adding new files or folders to the root directory.
+```shell
+lume -s -w
+```
+
+This updates the site in the browser automatically on file change.
+
+### Public Deployment
+
+TODO
+
+## Licenses
+
+Copyright Scott Fredericks 2026.
+
+The source code for this website is provided under the
+[MIT license](https://opensource.org/license/mit).
+
+The [Lato font](https://fonts.google.com/specimen/Lato) was designed by Łukasz
+Dziedzic and is provided under the
+[SIL Open Font License, Version 1.1](https://openfontlicense.org/open-font-license-official-text/).

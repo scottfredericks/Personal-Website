@@ -1,0 +1,164 @@
+/* Global properties */
+:root {
+  --navbar-height: 65px;
+
+  --background1: #02020d;
+  --background2: #03051a;
+  --background3: #090d40;
+  --foreground1: #fff9ed;
+  --foreground2: #f5e6c0;
+  --foreground3: #e7c88e;
+  --primary1: #2ce1d8;
+  --primary2: #21a59e;
+  --primary3: #1e7974;
+  --accent1: #ffe91f;
+  --accent2: #f0be1d;
+  --accent3: #cf9a09;
+  --backdrop1: #02020dde;
+  --backdrop2: #02020d79;
+}
+
+/* Dark Theme Override */
+[data-theme="light"] {
+  --background1: #f8e9ca;
+  --background2: #fae5b1;
+  --background3: #eec67c;
+  --foreground1: #02020d;
+  --foreground2: #050726;
+  --foreground3: #090d40;
+  --primary1: #fd5b5b;
+  --primary2: #9e3d33;
+  --primary3: #6b2a22;
+  --accent1: #148882;
+  --accent2: #1c8d87;
+  --accent3: #21a59e;
+  /* --accent1: #21A59E;
+  --accent2: #1c8d87;
+  --accent3: #20837e; */
+  --backdrop1: #fffefbf5;
+  --backdrop2: #f7f3ea88;
+}
+
+/* Main styling and layout */
+
+body {
+  /* Lato: https://fonts.google.com/specimen/Lato */
+  font-family: "Lato", sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: large;
+
+  background-color: var(--background1);
+  color: var(--foreground1);
+
+  margin: 0;
+
+  /* FIX: Do not reset padding to 0 here because navbar.css needs to set the top padding. */
+  /* padding: 0;  <-- REMOVE THIS LINE */
+
+  /* FIX: Ensure padding is included in total width/height calculations */
+  box-sizing: border-box;
+
+  /* Allows Canvas to resize to content */
+  position: relative;
+  min-height: 100vh;
+}
+
+main {
+  position: relative;
+  z-index: 2; /* Sits above the fixed canvas */
+  width: 70%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 75px 75px;
+
+  background: var(--backdrop1);
+
+  --mask-vert: linear-gradient(
+    to bottom,
+    black 0px,
+    black calc(100% - 50px),
+    transparent 100%
+  );
+
+  --mask-horiz: linear-gradient(
+    to right,
+    transparent 0px,
+    black 30px,
+    black calc(100% - 30px),
+    transparent 100%
+  );
+
+  -webkit-mask-image:
+    var(--mask-vert),
+    var(--mask-horiz);
+  mask-image:
+    var(--mask-vert),
+    var(--mask-horiz);
+
+  -webkit-mask-composite: source-in; /* For older WebKit */
+  mask-composite: intersect; /* For modern browsers */
+}
+
+h1 {
+  color: var(--accent1);
+}
+
+h2, h3 {
+  color: var(--accent2);
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+h2 {
+  margin-top: 3rem;
+}
+
+h4, h5, h6 {
+  color: var(--accent3);
+}
+
+/* Styling for non-text elements */
+
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+pre, code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+
+  background-color: var(--background2);
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+/* Links */
+
+main a:link {
+  color: var(--primary1);
+}
+
+main a:visited {
+  color: var(--primary3);
+}
+
+main a:hover {
+  color: var(--primary2);
+}
+
+main a:active {
+  color: var(--primary3);
+}
