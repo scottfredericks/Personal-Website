@@ -17,22 +17,13 @@ body {
   width: 100%;
   height: var(--navbar-height);
   z-index: 1000;
-
-  /* 
-     UPDATE: 
-     Instead of a gradient inside the bar, we make the bar solid 
-     so the text is always legible.
-  */
   background-color: var(--background2);
 
-  /* Remove the pointer-events rule here, default is fine */
+  /* Crucial: Allows the mobile menu to display below the container */
+  overflow: visible;
 }
 
-/* 
-   NEW: The Underslung Fade
-   This creates the "100% to 115%" effect. It hangs off the bottom
-   of the navbar and fades to transparent.
-*/
+/* Gradient from bottom of navbar */
 .navbar::after {
   content: "";
   position: absolute;
@@ -45,7 +36,7 @@ body {
     var(--background2) 0%,
     transparent 100%
   );
-  pointer-events: none; /* Crucial: lets users click content underneath the fade */
+  pointer-events: none; /* Lets users click content underneath the fade */
 }
 
 .nav-content {
@@ -57,9 +48,10 @@ body {
   margin: 0 auto;
   padding: 0 2rem;
   color: var(--text-color);
+  position: relative;
 }
 
-/* Brand Styling */
+/* Brand styling */
 .nav-brand {
   margin: 0;
   font-size: 1.5rem;
@@ -67,7 +59,12 @@ body {
   line-height: 1;
 }
 
-/* Menu Links Styling */
+/* Wrapper for the menu items (desktop default) */
+.nav-menu-wrapper {
+  display: block;
+}
+
+/* Menu links styling */
 .nav-menu {
   display: flex;
   align-items: center;
@@ -77,7 +74,7 @@ body {
   padding: 0;
 }
 
-.nav-link {
+.nav-link-item {
   text-decoration: none;
   font-weight: 600;
   transition: opacity 0.2s ease;
@@ -86,15 +83,16 @@ body {
 .nav-content a:link,
 .nav-content a:visited,
 .nav-content a:hover,
-.nav-content a:active {
+.nav-content a:active,
+.hamburger {
   color: var(--accent1);
 }
 
-.nav-link:hover {
+.nav-link-item:hover {
   opacity: 0.7;
 }
 
-/* Theme Toggle Button Reset */
+/* Theme toggle button reset */
 .theme-btn {
   background: none;
   border: none;
@@ -104,4 +102,77 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--accent1);
+}
+
+/* Hamburger button (only at small width) */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px;
+  z-index: 1001;
+}
+
+.hamburger .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: var(--accent1);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+/* Mobile styling */
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+  }
+
+  /* 
+     The sliding drawer menu.
+     We set max-height and padding to 0 by default to fix the 
+     "ghost height" issue when the menu is closed.
+  */
+  .nav-menu-wrapper {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--background2);
+
+    max-height: 0;
+    padding: 0;
+    overflow: hidden;
+
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* When the menu is toggled open via JS */
+  .nav-menu-wrapper.active {
+    max-height: 400px; /* Large enough to fit content */
+    padding: 1rem 0; /* Only add padding when open */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  /* Hamburger Animation */
+  .hamburger[aria-expanded="true"] .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  .hamburger[aria-expanded="true"] .bar:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger[aria-expanded="true"] .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
 }
