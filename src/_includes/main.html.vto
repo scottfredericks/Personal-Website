@@ -1,10 +1,50 @@
+---
+description: "Dev Portfolio, Resume, and Blog for Scott Fredericks"
+keywords: "Scott Fredericks, Dev Portfolio, Software Engineer, Programmer, Developer, Researcher, Website, Python, Physics"
+---
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Primary meta info -->
     <meta charset="UTF-8" />
     <title>Scott Fredericks - {{ title }}</title>
+    <meta name="author" content="Scott Fredericks">
+    <meta name="description" content="{{ description }}">
+    <meta
+      name="keywords"
+      content="{{ keywords }}"
+    >
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://scottfredericks.com/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://scottfredericks.com/">
+    <meta property="og:title" content="Scott Fredericks - {{ title }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta
+      property="og:image"
+      content="https://scottfredericks.com/img/preview-card.jpg"
+    >
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourwebsite.com/">
+    <meta property="twitter:title" content="Scott Fredericks - {{ title }}">
+    <meta property="twitter:description" content="{{ description }}">
+    <meta
+      property="twitter:image"
+      content="https://scottfredericks.com/img/preview-card.jpg"
+    >
+
+    <!-- Mobile Chrome Theme Color -->
+    <meta name="theme-color" content="#090d40">
+
+    <!-- Main stylesheet -->
     <link rel="stylesheet" href="/css/main.css" />
 
+    <!-- Lato font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -12,6 +52,22 @@
       rel="stylesheet"
     >
 
+    <!-- Knowledge graph info -->
+    <script type="application/ld+json">
+      {
+        "@context": "http://schema.org",
+        "@type": "Person",
+        "name": "Scott Fredericks",
+        "url": "https://scottfredericks.com",
+        "jobTitle": "Software Developer",
+        "sameAs": [
+          "https://www.linkedin.com/in/scott-fredericks/",
+          "https://github.com/scottfredericks"
+        ]
+      }
+    </script>
+
+    <!-- Theme detection script -->
     <script>
       // Immediately check local storage
       (function () {
