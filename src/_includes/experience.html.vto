@@ -2,18 +2,32 @@
 layout: main.html.vto
 ---
 <style>
-  .experience h4, .experience h3 {
+  /* Locations and dates on same line */
+  h4, h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
-  .experience h4 .job-date {
-    white-space: nowrap; /* keep the date on one line */
+  h4 .job-date {
+    white-space: nowrap;
   }
 
-  .experience h3 .job-location {
-    white-space: nowrap; /* keep the date on one line */
+  h3 .job-location {
+    white-space: nowrap;
+  }
+
+  /* Reduce vertical spacing between company and position */
+  .experience h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .experience h4 {
+    margin-top: 0.5rem;
+  }
+
+  .skills strong {
+    color: var(--accent3);
   }
 </style>
 {{ content }}
