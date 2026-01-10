@@ -9,7 +9,7 @@ layout: experience.html.vto
 
 ## Overview
 
-Software Engineer specializing in Python and cross-language development, with a focus on making complex tools reliable, understandable, and enjoyable to use. Combines experience in testing, physics, DevOps, tech support, and industrial automation to provide a unique problem-solving skillset. Brings a systems-oriented approach, clear communication, and careful attention to detail.
+Software Engineer specializing in Python and cross-language development, with a focus on making complex tools reliable, understandable, and enjoyable to use. Combines experience in testing, physics, DevOps, and technical support to provide a unique problem-solving skillset. Brings a systems-oriented approach, clear communication, and careful attention to detail.
 
 ## Development Experience
 
@@ -18,13 +18,13 @@ Software Engineer specializing in Python and cross-language development, with a 
 #### Test Engineering Manager <span class="job-date"><time datetime="2024-10">Oct 2024</time>–<time datetime="2025-05">May 2025</time></span>
 
 - Led company-wide DevOps and test automation initiatives across global teams, aligning with release and performance goals
-- Built and maintained Python frameworks for cross-platform deployment and end-to-end testing (JavaScript, gRPC, industrial protocols, related tools)
+- Built and maintained Python frameworks for cross-platform deployment and end-to-end testing (JavaScript, gRPC, industrial protocols)
 
 #### Senior SDET <span class="job-date"><time datetime="2022-12">Dec 2022</time>–<time datetime="2024-10">Oct 2024</time></span>
 
-- Managed and trained the testing team in the design and execution of test suites
+- Managed and trained the testing team on the design and execution of test suites
 - Planned and prioritized new features in partnership with developers and UX
-- Planned and conducted interviews for testing and UX candidates
+- Prepared and conducted interviews for testing and UX candidates
 
 #### Software Engineer in Test <span class="job-date"><time datetime="2021-01">Jan 2021</time>–<time datetime="2022-12">Dec 2022</time></span>
 
@@ -33,8 +33,8 @@ Software Engineer specializing in Python and cross-language development, with a 
 
 #### Technical Support Engineer <span class="job-date"><time datetime="2020-07">Jul 2020</time>–<time datetime="2021-01">Jan 2021</time></span>
 
-- Designed intuitive HMI interfaces using custom scripts and user-focused design principles
-- Created and troubleshot customer programs and communication for industrial control systems
+- Designed intuitive HMI interfaces using user-focused design principles and custom scripts
+- Created and troubleshot customer programs and communication configurations for industrial control systems
 - Authored technical documentation and product materials
 
 ### UNLV <span class="job-location">Las Vegas, NV</span>
@@ -42,8 +42,8 @@ Software Engineer specializing in Python and cross-language development, with a 
 #### Graduate Research Assistant <span class="job-date"><time datetime="2017-08">Aug 2017</time>–<time datetime="2019-06">Jun 2019</time></span>
 
 - Developed and published the open-source Python package [PyXtal](https://github.com/MaterSim/PyXtal) for crystal structure generation and symmetry analysis on [PyPi](https://pypi.org/project/pyxtal/)
-- Analyzed crystal structure properties using DFT analysis on a remote computing cluster
-- Published a [paper in ScienceDirect](https://doi.org/10.1016/j.cpc.2020.107810) summarizing the results
+- Analyzed crystal structure properties using batch jobs on a remote computing cluster
+- Published a [paper in ScienceDirect](https://doi.org/10.1016/j.cpc.2020.107810) summarizing the research
 
 ## Other Work Experience
 
@@ -51,7 +51,7 @@ Software Engineer specializing in Python and cross-language development, with a 
 
 #### IT/Photohost <span class="job-date">Nov 2019–Apr 2020</span>
 
-- Triaged technical issues across multiple sites while assisting with event operations
+- Triaged technical issues across multiple locations while assisting with event operations
 - Took and sold customer photos at attractions and event locations
 
 ### Kosmos Greekafe <span class="job-location">Fayetteville, AR</span>
@@ -73,7 +73,7 @@ Software Engineer specializing in Python and cross-language development, with a 
 - Publication: [PyXtal: A Python library for crystal structure generation and symmetry analysis](https://doi.org/10.1016/j.cpc.2020.107810)
 - Graduate Research Assistantship
 
-### <span>B.S. Physics</span><span>University of Arkansas, Fayeteville</span><span class="job-date">2011–2015</span>
+### <span>B.S. Physics</span><span>University of Arkansas, Fayetteville</span><span class="job-date">2011–2015</span>
 
 - Minor: Mathematics
 - Chancellor's Scholarship
@@ -93,27 +93,30 @@ Software Engineer specializing in Python and cross-language development, with a 
 
 ### Languages
 
-- **Python** - used professionally for testing and DevOps, used to develop [PyXtal](https://github.com/MaterSim/PyXtal), misc. personal projects
-- **JavaScript** - used as an auxilliary language for testing and customer project creation, personal website
-- **Rust** - learned independently ([The Rust Book](https://doc.rust-lang.org/book/)), using for personal projects
-- **C++** - reviewed C++ code bases for testing, learned in college, small hobby projects
-- **Bash** - used professionally for testing and DevOps, used for troubleshooting misc. Linux devices
+- **Python** - used professionally for testing and DevOps, used to develop [PyXtal](https://github.com/MaterSim/PyXtal), miscellaneous personal projects
+- **JavaScript** - used as a scripting language for testing and customer projects, personal website
+- **Rust** - learned independently ([The Rust Book](https://doc.rust-lang.org/book/)), personal projects
+- **C++** - reviewed C++ code bases for testing, college courses, small hobby projects
+- **Bash** - used professionally for testing and DevOps, used for troubleshooting miscellaneous Linux devices
 - **Lua** - used for small game dev projects
 - **Ladder Logic ([CICON](https://www.cimon.com/software/cicon))** - created and troubleshot customer programs and tradeshow demos
 
 ### Technologies
 
-- Git, GitLab CI
-- Docker, AWS (EC2/S3), WiX Toolset, pkgbuild, Industrial Protocols
+- **Version Control and Issue Tracking** - used GitLab (self-hosted) extensively for project management and CI, across multiple repos and projects, in collaboration with other teams. Uses GitHub for personal projects
+- **VMs and Containers** - created and automated Docker images for dev environments and deployment. Used VirtualBox and Windows Sandbox for reproducible testing and small-scale automations
+- **AWS**
+  - **EC2** - used to deploy internal services and dev environments
+  - **S3** - used for automated deployment and CI/CD resource management, and for a self-hosted personal website
+- **Packaging** - created a proprietary cross-platform packaging library to generate installers using WiX Toolset (MSI), pkgbuild (pkg), and PackageTools (deb). Created installers for nested applications requiring coordinated installation locations and install-time scripts
+- **Communication** - troubleshot and set up Ethernet networks, including DNS and proxying. Tested and configured industrial protocols, including MQTT/Sparkplug, OPC UA, EtherNet/IP, Modbus, and miscellaneous serial protocols
 
-### 
+### Core Skills
 
-Core Skills
-
-- Project Management
-- DevOps
-- Technical Writing
-- Research
-- Communication
+- **DevOps and Testing** - set up and monitored CI pipelines across multiple applications and platforms. Created automated test frameworks for unit and end-to-end testing, and managed the full test suite for an industrial touchscreen software lineup
+- **Project Management** - helped plan and track features across teams, including UX design. Developed company-wide processes to prioritize issues, record technical decisions, and meet release timelines
+- **Technical Writing** - Created articles and presentations for scientific and computational topics for a variety of audiences. Wrote and edited user and developer documentation, blog articles, and product catalogs
+- **Communication** - Coordinated feature and planning decisions across teams. Thoroughly documented technical details and issues on GitLab and advocated for developers and customers with upper management
+- **Research** - Developed a novel algorithm for molecular crystal structure generation and published a peer-reviewed article with the results. Attended weekly research presentations and read numerous articles about crystallography and materials science
 
 </section>
