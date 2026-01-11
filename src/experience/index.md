@@ -3,13 +3,13 @@ title: Experience
 layout: experience.html.vto
 ---
 
-<section class="experience">
-
 # Experience
 
 ## Overview
 
 Software Engineer specializing in Python and cross-language development, with a focus on making complex tools reliable, understandable, and enjoyable to use. Combines experience in testing, physics, DevOps, and technical support to provide a unique problem-solving skillset. Brings a systems-oriented approach, clear communication, and careful attention to detail.
+
+<section class="experience">
 
 ## Development Experience
 
@@ -93,30 +93,42 @@ Software Engineer specializing in Python and cross-language development, with a 
 
 ### Languages
 
-- **Python** - used professionally for testing and DevOps, used to develop [PyXtal](https://github.com/MaterSim/PyXtal), miscellaneous personal projects
-- **JavaScript** - used as a scripting language for testing and customer projects, personal website
-- **Rust** - learned independently ([The Rust Book](https://doc.rust-lang.org/book/)), personal projects
-- **C++** - reviewed C++ code bases for testing, college courses, small hobby projects
-- **Bash** - used professionally for testing and DevOps, used for troubleshooting miscellaneous Linux devices
-- **Lua** - used for small game dev projects
-- **Ladder Logic ([CICON](https://www.cimon.com/software/cicon))** - created and troubleshot customer programs and tradeshow demos
+- **Python** - Used professionally for testing and DevOps, used to develop [PyXtal](https://github.com/MaterSim/PyXtal), miscellaneous personal projects
+- **JavaScript** - Used as a scripting language for testing and customer projects, personal website
+- **Rust** - Learned independently ([The Rust Book](https://doc.rust-lang.org/book/)), personal projects
+- **C++** - Reviewed C++ code bases for testing, college courses, small hobby projects
+- **Bash** - Used professionally for testing and DevOps, used for troubleshooting miscellaneous Linux devices
+- **Lua** - Used for small game dev projects
+- **Ladder Logic ([CICON](https://www.cimon.com/software/cicon))** - Created and troubleshot customer programs and tradeshow demos
 
 ### Technologies
 
-- **Version Control and Issue Tracking** - used GitLab (self-hosted) extensively for project management and CI, across multiple repos and projects, in collaboration with other teams. Uses GitHub for personal projects
-- **VMs and Containers** - created and automated Docker images for dev environments and deployment. Used VirtualBox and Windows Sandbox for reproducible testing and small-scale automations
+- **Version Control and Issue Tracking** - Used GitLab (self-hosted) extensively for project management and CI, across multiple repos and projects, in collaboration with other teams. Used GitHub for personal projects
+- **VMs and Containers** - Created and automated Docker images for dev environments and deployment. Used VirtualBox and Windows Sandbox for reproducible testing and small-scale automations
 - **AWS**
-  - **EC2** - used to deploy internal services and dev environments
-  - **S3** - used for automated deployment and CI/CD resource management, and for a self-hosted personal website
-- **Packaging** - created a proprietary cross-platform packaging library to generate installers using WiX Toolset (MSI), pkgbuild (pkg), and PackageTools (deb). Created installers for nested applications requiring coordinated installation locations and install-time scripts
-- **Communication** - troubleshot and set up Ethernet networks, including DNS and proxying. Tested and configured industrial protocols, including MQTT/Sparkplug, OPC UA, EtherNet/IP, Modbus, and miscellaneous serial protocols
+  - **EC2** - Used to deploy internal services and dev environments
+  - **S3** - Used for automated deployment and CI/CD resource management, and for a self-hosted personal website
+- **Packaging** - Created a proprietary cross-platform packaging library to generate installers using WiX Toolset (MSI), pkgbuild (pkg), and dpkg-deb (deb). Created installers for nested applications requiring coordinated installation locations and install-time scripts
+- **Networking/Protocols** - Troubleshot and set up Ethernet networks, including DNS and proxying. Tested and configured industrial protocols, including MQTT/Sparkplug, OPC UA, EtherNet/IP, Modbus, and miscellaneous serial protocols
 
 ### Core Skills
 
-- **DevOps and Testing** - set up and monitored CI pipelines across multiple applications and platforms. Created automated test frameworks for unit and end-to-end testing, and managed the full test suite for an industrial touchscreen software lineup
-- **Project Management** - helped plan and track features across teams, including UX design. Developed company-wide processes to prioritize issues, record technical decisions, and meet release timelines
+- **DevOps and Testing** - Set up and monitored CI pipelines across multiple applications and platforms. Created automated test frameworks for unit and end-to-end testing, and managed the full test suite for an industrial touchscreen software lineup
+- **Project Management** - Helped plan and track features across teams, including UX design. Developed company-wide processes to prioritize issues, record technical decisions, and meet release timelines
 - **Technical Writing** - Created articles and presentations for scientific and computational topics for a variety of audiences. Wrote and edited user and developer documentation, blog articles, and product catalogs
 - **Communication** - Coordinated feature and planning decisions across teams. Thoroughly documented technical details and issues on GitLab and advocated for developers and customers with upper management
 - **Research** - Developed a novel algorithm for molecular crystal structure generation and published a peer-reviewed article with the results. Attended weekly research presentations and read numerous articles about crystallography and materials science
+
+</section>
+
+<section class="contact">
+
+## Contact
+
+### Las Vegas, NV {: style="text-align:center"}
+
+### [LinkedIn](https://www.linkedin.com/in/scott-fredericks/) {: style="text-align:center"}
+
+### [GitHub](https://github.com/scottfredericks) {: style="text-align:center"}
 
 </section>

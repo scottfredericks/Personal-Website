@@ -39,7 +39,9 @@ For my masters thesis, I authored
 computational molecular crystallography. I also published an article outlining
 the work.
 
-## Where to Find Me
+## Contact
+
+### Las Vegas, NV {: style="text-align:center"}
 
 ### [LinkedIn](https://www.linkedin.com/in/scott-fredericks/) {: style="text-align:center"}
 
