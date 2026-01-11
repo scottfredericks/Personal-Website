@@ -1,0 +1,47 @@
+---
+layout: main.html.vto
+---
+<style>
+  /* Locations and dates on same line */
+  .experience h4,
+  .experience h3,
+  .education h4,
+  .education h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  h4 .job-date {
+    white-space: nowrap;
+  }
+
+  h3 .job-location {
+    white-space: nowrap;
+  }
+
+  /* Reduce vertical spacing between company and position */
+  .experience h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .experience h4 {
+    margin-top: 0.5rem;
+  }
+
+  .skills strong {
+    color: var(--accent3);
+  }
+
+  section.contact ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    text-align: center;
+  }
+
+  section.contact ul li {
+    display: block;
+  }
+</style>
+{{ content }}
