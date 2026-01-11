@@ -125,10 +125,8 @@ Software Engineer specializing in Python and cross-language development, with a 
 
 ## Contact
 
-### Las Vegas, NV {: style="text-align:center"}
-
-### [LinkedIn](https://www.linkedin.com/in/scott-fredericks/) {: style="text-align:center"}
-
-### [GitHub](https://github.com/scottfredericks) {: style="text-align:center"}
+- Las Vegas, NV
+- [LinkedIn](https://www.linkedin.com/in/scott-fredericks/)
+- [GitHub](https://github.com/scottfredericks)
 
 </section>
