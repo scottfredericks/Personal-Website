@@ -14,6 +14,8 @@ TODO
 
 This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code on GitHub [here](https://github.com/scottfredericks/Personal-Website).
 
+Hosting is provided by [GitHub Pages](https://docs.github.com/en/pages). Older versions used an [AWS S3](https://aws.amazon.com/s3/) bucket.
+
 I also have some blog articles describing the site's creation in greater detail:
 
 - [Building a Personal Website - Part 1: Using Lume](/blog/personal-website-part-1/)
@@ -83,9 +85,9 @@ No promises, but here are some projects I might work on at some point:
 - AI-powered job search app using Tauri and React/TypeScript
   - Emphasis on finding high-alignment jobs based on user preferences and natural language reasoning
   - Use models that preserve user privacy, from companies that practice AI safety
-  - Use a user-provided, locally stored OpenRouter API key to simplify deployment and billing
+  - Use a user-provided, locally stored OpenRouter API key to simplify setup, deployment, and billing
   - Never submit job applications or communications automatically, and encourage the user to review all AI-generated materials before submission
-  - Nice-to-have: in-software, layout-aware, AI-powered generation and editing of resumes and other documents
+  - Nice-to-have: in-software, layout-aware, interactive AI-powered generation and editing of resumes and other documents
 - Educational videos for physics and mathematics
   - Emphasis on deep conceptual understanding by breaking complex ideas into accessible pieces
   - Focus on abstract foundational topics, rather than popular descriptions or application
