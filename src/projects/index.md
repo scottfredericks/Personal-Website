@@ -10,7 +10,13 @@ TODO
 
 ## Personal Website
 
-TODO
+![Personal website logo](/img/sflogo.svg){: style="max-width: 15%;" }
+
+This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code on GitHub [here](https://github.com/scottfredericks/Personal-Website).
+
+I also have some blog articles describing the site's creation in greater detail:
+
+- [Building a Personal Website - Part 1: Using Lume](/blog/personal-website-part-1/)
 
 ## PyXtal
 
