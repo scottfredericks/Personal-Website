@@ -74,13 +74,13 @@ One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wik
 
 ![PongLove2D screen capture](/img/projects/pong_love2d.gif){: style="max-width: 40%;" }
 
-A simple Pong clone, but with gravity whose direction rotates over time. Uses the mouse for control and has 8-bit sound effects.
+A simple Pong clone, but with gravity whose direction rotates over time. Uses the mouse for control and has 8-bit sound effects. Created using Lua and [Love2D](https://love2d.org/).
 
-Created using Lua and [Love2D](https://love2d.org/). Unfortunately I no longer have the source code, but you can still download and play the `exe` from the [GitHub repo](https://github.com/scottfredericks/PongLove2D).
+Unfortunately I no longer have the source code, but you can still download and play the `exe` from the [GitHub repo](https://github.com/scottfredericks/PongLove2D).
 
 ## Possible Future Projects
 
-No promises, but here are some projects I might work on at some point:
+No promises, but here are some projects I'm considering:
 
 - AI-powered job search app using Tauri and React/TypeScript
   - Emphasis on finding high-alignment jobs based on user preferences and natural language reasoning
