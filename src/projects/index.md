@@ -22,11 +22,11 @@ I also have some blog articles describing the site's creation in greater detail:
 
 ![PyXtal logo](/img/projects/pyxtal_logo.png){: style="background:white;" }
 
-[PyXtal](https://github.com/MaterSim/PyXtal) is an open-source Python library for [crystal structure prediction](https://en.wikipedia.org/wiki/Crystal_structure_prediction), specializing in generating high-symmetry molecular crystals. It was created in collaboration with [Dr. Qiang Zhu](https://qzhu2017.github.io/) for my masters thesis, and is available on [PyPi](https://pypi.org/project/pyxtal/). I also published a [paper in ScienceDirect](https://doi.org/10.1016/j.cpc.2020.107810) summarizing the research.
+[PyXtal](https://github.com/MaterSim/PyXtal) is an open-source Python library for [crystal structure prediction](https://en.wikipedia.org/wiki/Crystal_structure_prediction), specializing in generating high-symmetry molecular crystals. It is available for installation via `pip` on [PyPi](https://pypi.org/project/pyxtal/). I also published a [paper in ScienceDirect](https://doi.org/10.1016/j.cpc.2020.107810) summarizing the research.
 
-This was my primary introduction to version control, issue tracking, packaging, unit testing, and automated documentation (see the [readthedocs](https://pyxtal.readthedocs.io/en/latest/)).
+This was my first major dive into version control, issue tracking, packaging, unit testing, and automated documentation (see the [readthedocs](https://pyxtal.readthedocs.io/en/latest/)).
 
-The project is now maintained by the Zhu group.
+This project was created in collaboration with [Dr. Qiang Zhu](https://qzhu2017.github.io/) for my masters thesis, and is now maintained by his research group.
 
 <details>
 
@@ -67,3 +67,29 @@ One nice property of the wave equation is that it extends very nicely to higher 
 One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wiki/Numerical_stability). If your cells or your time steps are too large, the simulation tends to "blow up" into a static-y mess. But if you go too small, you'll be doing more computation than you need to. The [CFL conditions](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition) tell you how big your step sizes can be without losing stability.
 
 </details>
+
+## Pong (Love2D)
+
+![PongLove2D screen capture](/img/projects/pong_love2d.gif){: style="max-width: 40%;" }
+
+A simple Pong clone, but with gravity whose direction rotates over time. Uses the mouse for control and has 8-bit sound effects.
+
+Created using Lua and [Love2D](https://love2d.org/). Unfortunately I no longer have the source code, but you can still download and play the `exe` from the [GitHub repo](https://github.com/scottfredericks/PongLove2D).
+
+## Possible Future Projects
+
+No promises, but here are some projects I might work on at some point:
+
+- AI-powered job search app using Tauri and React/TypeScript
+  - Emphasis on finding high-alignment jobs based on user preferences and natural language reasoning
+  - Use models that preserve user privacy, from companies that practice AI safety
+  - Use a user-provided, locally stored OpenRouter API key to simplify deployment and billing
+  - Never submit job applications or communications automatically, and encourage the user to review all AI-generated materials before submission
+  - Nice-to-have: in-software, layout-aware, AI-powered generation and editing of resumes and other documents
+- Educational videos for physics and mathematics
+  - Emphasis on deep conceptual understanding by breaking complex ideas into accessible pieces
+  - Focus on abstract foundational topics, rather than popular descriptions or application
+  - Heavy use of scripting for visualizations
+- Indie game dev
+  - Frameworks: [PICO-8](https://www.lexaloffle.com/pico-8.php), [Godot](https://godotengine.org/), [Bevy](https://bevy.org/), [pygame](https://www.pygame.org/news)
+  - Genres: simulation, survival, RPG, arcade
