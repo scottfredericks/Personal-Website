@@ -4,4 +4,18 @@ title: Projects
 
 # Projects
 
-## (under construction)
+## AI Job Search
+
+TODO
+
+## Personal Website (Lume)
+
+TODO
+
+## PyXtal
+
+TODO
+
+## Wave Equation Simulation
+
+TODO
