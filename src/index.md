@@ -11,9 +11,9 @@ title: About Me
 ## My Approach
 
 I use code, math, and intuition to find creative solutions to challenging
-problems. I've found that leveraging a variety of backgrounds helps with finding the right tools and adapting in a rapidly changing world.
+problems. I've found that leveraging a variety of backgrounds helps with finding the right tools and adapting in our rapidly changing world.
 
-As a lifelong learner, I strive to thoroughly document my findings and share them in an accessible way. Fostering a culture of mentorship and collaboration is very important to me.
+As a lifelong learner, I strive to thoroughly document my findings and share them in accessible ways. Wherever I work, I prioritize fostering a culture of mentorship and collaboration.
 
 </section>
 
