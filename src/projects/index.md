@@ -8,7 +8,7 @@ Below are selected projects from my professional and independent work, roughly i
 
 ## Automated Test Project Generation and Deployment (CIMON)
 
-***Tech**: Python, JavaScript, gRPC, pytest, industrial protocols*
+_**Tech**: Python, JavaScript, gRPC, pytest, industrial protocols_
 
 As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test unintended interactions between features.
 
@@ -24,7 +24,7 @@ By making the project and test generation scriptable, we were able to cover a la
 
 ## Automated Cross-Platform Packaging (CIMON)
 
-***Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic*
+_**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic_
 
 Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats ([WiX Toolset](https://www.firegiant.com/wixtoolset/) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuild](https://manp.gs/mac/1/productbuild) for macOS), they require fragile, single-use commands that are difficult to maintain as the project structure changes.
 
@@ -36,7 +36,7 @@ Other features included postinstall scripts, S3 upload/download, multi-language 
 
 ## Personal Website
 
-***Tech**: HTML, CSS, JavaScript, Lume, AWS S3*
+_**Tech**: HTML, CSS, JavaScript, Lume, AWS S3_
 
 ![Personal website logo](/img/sflogo.svg){: style="max-width: 15%;" }
 
@@ -50,7 +50,7 @@ I also have some blog articles describing the site's creation in greater detail:
 
 ## PyXtal (Research Assistant at UNLV)
 
-***Tech**: Python, NumPy, unittest, Sphinx, Slurm*
+_**Tech**: Python, NumPy, unittest, Sphinx, Slurm_
 
 ![PyXtal logo](/img/projects/pyxtal_logo.png){: style="background:white;" }
 
@@ -76,7 +76,7 @@ Doing this for [molecular crystals](https://en.wikipedia.org/wiki/Molecular_soli
 
 ## Wave Equation Simulation
 
-***Tech**: Rust, Macroquad, C++, SDL, Lua, Love2D*
+_**Tech**: Rust, Macroquad, C++, SDL, Lua, Love2D_
 
 ![2D wave equation simulation](/img/projects/wave.gif)
 
@@ -108,7 +108,7 @@ One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wik
 
 ## Gravity Pong
 
-***Tech**: Lua, Love2D*
+_**Tech**: Lua, Love2D_
 
 ![PongLove2D screen capture](/img/projects/pong_love2d.gif){: style="max-width: 40%;" }
 
