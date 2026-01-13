@@ -24,7 +24,7 @@ It's okay. It gets the job done, and it shows potential employers that I know
 how to Google things.
 
 But I don't just want my website to be _okay_. I want it to be _pretty neat_.
-So let's add some green to the old GitHub contribution chart and learn some new
+So let's fill up some space in the old GitHub contribution graph and learn some new
 tools.
 
 ## Choosing the Tech
@@ -57,7 +57,7 @@ a few reasons:
 I already have experience using GitLab for Agile-style project management, but
 I'd rather not host a server or pay for a project of this size.
 
-GitHub is similar enough to GitLab, and most of my personal code is already there. Their free repos and
+GitHub is similar enough to GitLab, and most of my personal code is there already. Their free repos and
 issue tracking are more than enough to track the code changes and other work. I
 don't mind making the code public (that's kind of the point of a dev portfolio),
 and in this particular case I don't really care if GitHub uses my code to train
@@ -98,7 +98,7 @@ irm https://deno.land/install.ps1 | iex
 Conveniently, this also adds `deno` to the path. Much simpler than installing
 `node`, in my opinion.
 
-Then, from within the project folder:
+Then, from within the project folder (using any shell):
 
 ```shell
 deno run -A https://lume.land/init.ts
@@ -218,9 +218,9 @@ Summary Text
 produces this HTML:
 
 ```html
-<h1>Level One Title</h1>
+<h1>Level One Header</h1>
 <p>Summary Text</p>
-<h2>Level Two Title</h2>
+<h2>Level Two Header</h2>
 <ul>
   <li>
     Item 1 <ul>
@@ -243,7 +243,7 @@ and looks like this in the browser:
 
 Great, our offline website works! But it's very ugly. We should add some CSS to make it less ugly.
 But before we can do that, we need to understand how Lume handles layouts,
-templates, and other resources. This is because in Lume, CSS files are handles like any other resource.
+templates, and other resources. This is because in Lume, CSS files are handled like any other resource.
 
 ### Applying a Layout
 
@@ -251,7 +251,7 @@ Lume uses a JavaScript-based templating engine called
 [Vento](https://vento.js.org/). If you've never used a templating tool before,
 the basic idea is that you create template files that are similar to the final
 output. Within the template files, you can write code-based expressions instead of
-the actual content. Then, the temlpating engine "renders" the final output by
+the actual content. Then, the templating engine "renders" the final output by
 evaluating the expressions and injecting their literal string values into the
 document.
 
@@ -318,7 +318,7 @@ title: About Me
 ```
 
 You can define whatever other
-variables you like and use them within temlpate files the same way we use
+variables you like and use them within template files the same way we use
 `title` and `content`.
 
 Now the page includes the `h1` element added by the layout, and uses the page
@@ -338,7 +338,7 @@ we want to apply the defaults in. Let's create `src/_data.yml`:
 layout: main.html.vto
 ```
 
-Now we can remove the `layout` line from the top of `index.html`, since a
+Now we can remove the `layout` line from the top of `index.md`, since a
 default value will be pulled from `_data.yml`. If you reload the page, you'll
 see that the layout is still applied.
 
@@ -371,7 +371,7 @@ body {
 }
 ```
 
-Now we can link the CSS file in the usual way within the HTML temlpate file, by
+Now we can link the CSS file in the usual way within the HTML template file, by
 adding a `link` element inside of the `head` element and specifying which CSS
 file to use:
 
@@ -400,8 +400,9 @@ should see the updated styling in the browser:
 
 Note that when we apply styling, we want to target the HTML elements in the
 final output (in the `_site` folder), rather than the contents of the source
-Markdown files. So, for example, to target all level 1 headers in CSS, you would
-use a block like
+Markdown files. Our CSS code only "knows about" the rendered HTML, not Markdown or any other Lume-specific features.
+
+So, for example, to target all level 1 headers in CSS, you would use `h1`, not `#`:
 
 ```css
 h1 {
@@ -417,7 +418,7 @@ and not
 }
 ```
 
-If you get confused, just remember that the website consists of everything that gets output to the `_site`
+If you get confused, just remember that the final website consists of everything that gets output to the `_site`
 folder, and nothing else.
 
 #### Adding JavaScript
@@ -495,26 +496,25 @@ can properly utilize pretty URLs so that the resulting URL is just
 To designate files as blog articles, we'll add a `blog_article` tag to every article
 `.md` file that we want to appear in the list. We'll also add a `date` variable
 that we can list at the top of the article and use for sorting. Here's the top
-of an article .md file:
+of an article `.md` file:
 
 ```md
 ---
 title: "Building a Personal Website - Part 1: Using Lume"
-date: 01-05-2026 12:00
+date: 2026-01-05 12:00
 tags: [blog_article]
 ---
 ```
 
-Note that JavaScript has some quirks when parsing dates. If we had used
-"2026-01-05", then the date would be rendered as "January 4th, 2026", which we
-don't want. Adding `12:00` for noon gets around this and correctly renders
-"January 5th, 2026".
+Note that JavaScript has some quirks when parsing dates. If we had just used
+"2026-01-05", then the date would be rendered as "January 4th, 2026".
+Adding `12:00` for noon gets around this and correctly renders "January 5th, 2026".
 
 Also note that if the title includes certain characters like `:`, you'll need to
 wrap it in quotes.
 
 In order to work with dates more effectively, let's add the
-[Lume Date plugin](https://v1.lume.land/plugins/date/) by adding a couple of
+[Lume Date plugin](https://lume.land/plugins/date/) by adding a couple of
 lines to `_config.ts` and restarting `lume`:
 
 ```typescript
@@ -664,9 +664,10 @@ Looking at the article in the browser:
 
 ## Conclusion
 
-Great! We finally have all of the same functionality that raw
-HTML/CSS/JavaScript has, but with a templating framework and live updates. Now
-we can focus on the actual content of the site.
+Great! We've set up Lume, created layouts and styling templates, and built a dynamic blog.
+We finally have all of the same functionality that raw
+HTML/CSS/JavaScript has, but with a templating framework and live updates.
+Now we are free to focus on the actual content of the site.
 
-In the next article, we'll look at desigining a theme with a dynamic background
+In the next article, we'll look at designing a theme with a dynamic background
 using JavaScript and CSS.
