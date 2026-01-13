@@ -4,13 +4,13 @@ title: Projects
 
 # Projects
 
-Below are selected projects from my professional and independent work, spanning test automation, developer tooling, scientific computing, and interactive simulations.
+Below are selected projects from my professional and independent work, roughly in reverse chronological order.{: style="text-align: center;"}
 
-## Automated Test Project Generation and Deployment
+## Automated Test Project Generation and Deployment (CIMON)
 
 ***Tech**: Python, JavaScript, gRPC, pytest, industrial protocols*
 
-As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a software lineup for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test unintended interactions between features.
+As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test unintended interactions between features.
 
 As a complement to unit and integration tests, I developed an end-to-end test framework that ran projects on real devices and collected the execution results. This involved:
 
@@ -22,17 +22,17 @@ As a complement to unit and integration tests, I developed an end-to-end test fr
 
 By making the project and test generation scriptable, we were able to cover a large number of complex test cases using a relatively small testing code base.
 
-## Automated Cross-Platform Packaging
+## Automated Cross-Platform Packaging (CIMON)
 
 ***Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic*
 
 Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats ([WiX Toolset](https://www.firegiant.com/wixtoolset/) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuild](https://manp.gs/mac/1/productbuild) for macOS), they require fragile, single-use commands that are difficult to maintain as the project structure changes.
 
-To automate the process, I developed an internal Python library to collect the binaries for each application, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
+To automate the process, I developed an internal Python library to collect the binaries for each application, perform transformations, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
 
-A key feature was the ability to define custom logic for each component using standard Python files. This made it possible to conditionally move and rename specific files and folders based on the platform, component name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, component name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
 
-Other features included postinstall scripts, S3 upload/download, multi-language translation support, and Apple code signing.
+Other features included postinstall scripts, S3 upload/download, multi-language translation support, and automated Apple code signing.
 
 ## Personal Website
 
@@ -48,7 +48,7 @@ I also have some blog articles describing the site's creation in greater detail:
 
 - [Building a Personal Website - Part 1: Using Lume](/blog/personal-website-part-1/)
 
-## PyXtal
+## PyXtal (Research Assistant at UNLV)
 
 ***Tech**: Python, NumPy, unittest, Sphinx, Slurm*
 
@@ -62,15 +62,15 @@ This project was my introduction to published academic research, version control
 
 <details>
 
-<summary>Expand for Technical Details</summary>
+<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
 
 Crystals are materials that consist of the same pattern of atoms repeated throughout 3D space, on a grid of boxes called unit cells. To describe a specific crystal structure, you just need to define the size and shape of the unit cell, plus the type and positions of atoms within the cell. In practice, most crystals have additional symmetry, for example rotation or reflection. This symmetry is described using a branch of mathematics called [group theory](https://en.wikipedia.org/wiki/Group_theory), and it turns out there are 230 distinct [space groups](https://en.wikipedia.org/wiki/Space_group) that a crystal structure might fall into.
 
-Scientists are aware that real crystals tend to have high symmetry, so in order to predict the structure of new materials, it is reasonable to guess possible space groups first, then insert atoms in a way that preserves the symmetry of those space groups. The basic idea is to generate a large number of random crystal structures in this way, then optimize them using [force-field methods](https://en.wikipedia.org/wiki/Force_field_(chemistry)) or [DFT](https://en.wikipedia.org/wiki/Density_functional_theory) and compare their energies. The structure with the lowest total energy is the one that is most likely to exist in the real world. Using computer simulations to do this is often much faster and cheaper than running physical experiments.
+Scientists are aware that real crystals tend to have high symmetry. So in order to predict the structure of new materials, it is reasonable to guess possible space groups first, then insert atoms in a way that preserves the symmetry of those space groups. The basic idea is to generate a large number of random crystal structures in this way, then optimize them using [force-field methods](https://en.wikipedia.org/wiki/Force_field_(chemistry)) or [DFT](https://en.wikipedia.org/wiki/Density_functional_theory) to calculate their energies. The structure with the lowest total energy is the one that is most likely to exist in the real world. Using computer simulations to do this is often much faster and cheaper than running physical experiments.
 
 To ensure that symmetry is preserved when adding atoms, we can look at special positions within the unit cell called [Wyckoff positions](https://en.wikipedia.org/wiki/Wyckoff_positions). Wyckoff positions define what symmetry is needed for objects located at different locations in the cell. To visualize this, imagine cutting out holes on a paper snowflake before unfolding it. If you cut a hole in the middle corner where two edges meet, you will end up with a single hole after unfolding. Mathematically, this is because the corner is a high-symmetry Wyckoff position. If you instead cut a hole in the middle of the paper, away from the edges, then you will end up with multiple holes after unfolding. We can apply the same idea to construct a symmetrical crystal. When we want to insert an atom into a Wyckoff position, we can make sure that the result is still symmetrical by making copies of that atom in the right places (e.g. by "unfolding the snowflake").
 
-Doing this with [molecular crystals](https://en.wikipedia.org/wiki/Molecular_solid) is a bit trickier, since you have to worry about the orientations of the molecules in addition to their positions. For example, imagine that instead of cutting a circular hole in the corner of the snowflake (similar to an atom), you instead cut out a letter of the alphabet (similar to a molecule). Now if you were to unfold the paper, you would end up with a shape that didn't match the original. Analogously, putting an asymmetrical molecule in a symmetrical Wyckoff position would result in extra atoms that don't match the desired molecular structure. PyXtal solves this problem by automatically detecting molecular symmetry and determining which Wyckoff positions are compatible with which molecular orientations.
+Doing this for [molecular crystals](https://en.wikipedia.org/wiki/Molecular_solid) is trickier, because you have to worry about the orientations of the molecules in addition to their positions. For example, imagine that instead of cutting a circular hole in the corner of the snowflake (similar to an atom), you instead cut out a letter of the alphabet (similar to a molecule). Now if you were to unfold the paper, you would end up with a shape that didn't match the original. Analogously, putting an asymmetrical molecule in a symmetrical Wyckoff position would result in extra atoms that didn't match the desired molecular structure. PyXtal solves this problem by automatically detecting molecular symmetry and determining which Wyckoff positions are compatible with which molecular orientations.
 
 </details>
 
@@ -92,7 +92,7 @@ I've revisited this simulation several times to explore different languages and 
 
 <details>
 
-<summary>Expand for Technical Details</summary>
+<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
 
 Simulating the wave equation works by splitting space up into a grid of tiny cells. You define the value of the field (the quantity you care about, like height, pressure, etc.) at each cell, as well as how quickly the value is changing there (the "velocity"). Then you start moving forward in time by small steps. For every time step, at each cell, you update the field value using the velocity, and you update the velocity using the acceleration.
 
@@ -100,7 +100,7 @@ This is a basic example of converting a differential equation into a [cellular a
 
 For the wave equation specifically, the acceleration is proportional to the second spatial derivative (the ["Laplacian"](https://en.wikipedia.org/wiki/Laplace_operator)) of the field value. On a 2D grid, this can easily be calculated by comparing the value at each cell to the sum of its neighbors.
 
-One nice property of the wave equation is that it is easy to extend to higher dimensions. The method for simulating a 3D system is basically the same as for 1D or 2D. You can even simulate a lower-dimensional object waving around in a higher-dimensional space. The simplicity of the calculation also makes simulations easy to code and suitable for running on a GPU.
+One nice property of the wave equation is that it is easy to extend to higher dimensions. The method for simulating a 3D system is basically the same as for 1D or 2D. You can even simulate a lower-dimensional object waving around in a higher-dimensional space. The simplicity of the calculation also makes it easy to code and suitable for running on a GPU.
 
 One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wiki/Numerical_stability). If your cells or your time steps are too large, the simulation tends to "blow up" into chaotic noise. But if you go too small, you'll be doing more computation than you need to. To find the right balance, the [CFL conditions](https://en.wikipedia.org/wiki/Courant%E2%80%93Friedrichs%E2%80%93Lewy_condition) can be used to determine how big your step sizes can be without losing stability.
 
@@ -114,4 +114,4 @@ One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wik
 
 A simple Pong clone, but with gravity whose direction changes over time. Created using Lua and [Love2D](https://love2d.org/). Uses the mouse for control and has 8-bit sound effects generated using [jsfxr](https://sfxr.me/) and [LMMS](https://lmms.io/).
 
-You can download and play the `exe` from the [GitHub repo](https://github.com/scottfredericks/PongLove2D).
+You can play on Windows by cloning or downloading the [GitHub repo](https://github.com/scottfredericks/PongLove2D) and running the `exe` file.
