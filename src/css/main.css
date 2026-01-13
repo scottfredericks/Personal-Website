@@ -8,9 +8,9 @@
   --foreground1: #fff9ed;
   --foreground2: #f5e6c0;
   --foreground3: #e7c88e;
-  --primary1: #2ce1d8;
-  --primary2: #21a59e;
-  --primary3: #1e7974;
+  --primary1: #24e6dc;
+  --primary2: #09b6ad;
+  --primary3: #02a79e;
   --accent1: #ffe91f;
   --accent2: #f0be1d;
   --accent3: #cf9a09;
@@ -20,20 +20,20 @@
 
 /* Dark Theme Override */
 [data-theme="light"] {
-  --background1: #f8e9ca;
+  --background1: #f7efe2;
   --background2: #fae5b1;
   --background3: #eec67c;
   --foreground1: #02020d;
   --foreground2: #050726;
   --foreground3: #090d40;
-  --primary1: #fd5b5b;
-  --primary2: #9e3d33;
-  --primary3: #6b2a22;
+  --primary1: #f15757;
+  --primary2: #be4e42;
+  --primary3: #ad4335;
   --accent1: #148882;
   --accent2: #1c8d87;
   --accent3: #21a59e;
   --backdrop1: #fffefbf5;
-  --backdrop2: #f7f3ea52;
+  --backdrop2: #f7f3ea28;
 }
 
 /* Main styling and layout */
@@ -158,4 +158,17 @@ main a:hover {
 
 main a:active {
   color: var(--primary3);
+}
+
+/* Contact section */
+
+section.contact ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  text-align: center;
+}
+
+section.contact ul li {
+  display: block;
 }

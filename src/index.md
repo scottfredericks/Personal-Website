@@ -6,43 +6,47 @@ title: About Me
 
 **I like solving interesting problems and making cool stuff.** {: style="text-align:center"}
 
+<section class="approach">
+
 ## My Approach
 
 I use code, math, and intuition to find creative solutions to challenging
-problems. In a highly specialized and rapidly changing world, adaptability is
-essential. Leveraging a variety of backgrounds makes you better at finding,
-creating, and using the right tools.
+problems. I've found that leveraging a variety of backgrounds helps with finding the right tools and adapting in our rapidly changing world.
+
+As a lifelong learner, I strive to thoroughly document my findings and share them in accessible ways. Wherever I work, I prioritize fostering a culture of mentorship and collaboration.
+
+</section>
+
+<section class="interests">
 
 ## My Interests
 
 ### Programming
 
-My main language is Python, but I've also worked with JavaScript, C++, and other
-languages. I'm currently learning Rust and TypeScript/React for personal
-projects, and would like to use them in production.
-
-I also have professional experience with testing, DevOps, feature planning, and
+My main language is Python, but I've also worked with Rust, JavaScript, C++, and other
+languages. I have professional experience with testing, DevOps, feature planning, and
 UX.
 
 ### Physics and Mathematics
 
-As a physicist, my main interest is in foundational theory, particulary in
-generalizing [geometrodynamics](https://en.wikipedia.org/wiki/Geometrodynamics)
-to describe quantum interactions.
+My main interest is foundational theory, particularly in geometric approaches to quantum gravity including [geometrodynamics](https://en.wikipedia.org/wiki/Geometrodynamics) and [noncommutative geometry](https://en.wikipedia.org/wiki/Noncommutative_geometry).
 
-I would also like to better understand
-[noncommuatative geometry](https://en.wikipedia.org/wiki/Noncommutative_geometry)
-and its potential applications.
+### Education
 
-For my masters thesis, I authored
-[PyXtal](https://pyxtal.readthedocs.io/en/latest/), a Python library for use in
-computational molecular crystallography. I also published an article outlining
-the work.
+I regularly spend time teaching and mentoring others. I have a [blog](/blog), and I'd like to begin creating educational content focused on making technical topics easy to understand.
+
+### Game Dev
+
+I've experimented with game dev since I first got a copy of [QuickBASIC](https://en.wikipedia.org/wiki/QuickBASIC) from a CD in junior high. Since then I've made game demos in various languages, and I'd like to work on larger projects.
+
+</section>
+
+<section class="contact">
 
 ## Contact
 
-### Las Vegas, NV {: style="text-align:center"}
+- Las Vegas, NV
+- [LinkedIn](https://www.linkedin.com/in/scott-fredericks/)
+- [GitHub](https://github.com/scottfredericks)
 
-### [LinkedIn](https://www.linkedin.com/in/scott-fredericks/) {: style="text-align:center"}
-
-### [GitHub](https://github.com/scottfredericks) {: style="text-align:center"}
+</section>

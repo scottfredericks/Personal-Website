@@ -17,7 +17,7 @@ const PATTERN_GRID_SIZE = CONFIG.baseDensityUnit * CONFIG.tileMultiplier;
 const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize;
 
 const PALETTE_DARK_BG = ["#2CE1D8", "#FFF9ED", "#fd5b5bff", "#FFF9ED"];
-const PALETTE_LIGHT_BG = ["#21A59E", "#02020D", "#bb4040ff", "#02020D"];
+const PALETTE_LIGHT_BG = ["#4bcac4", "#02020D", "#fd5b5bff", "#02020D"];
 
 const DIRS = {
   N: { x: 0, y: -1 },
