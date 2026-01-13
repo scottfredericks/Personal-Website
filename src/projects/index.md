@@ -6,17 +6,21 @@ title: Projects
 
 ## Automated Test Project Generation and Deployment
 
-TODO
+[CIMON Canvas](https://www.cimon.com/software/canvas) consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test all possible interactions between features.
+
+As a complement to unit and integration tests, I developed an end-to-end test framework that ran projects on real devices and collected the execution results. This involved a Python library to generate project files based on the schema, injected JavaScript code running at execution time, real-time tag-based communication, CSV generation and parsing, and [gRPC](https://grpc.io/) for deployment. Test execution used a custom JavaScript library for in-project testing and [pytest](https://docs.pytest.org/en/stable/) for final collection and reporting.
+
+By making the project and test generation scriptable, we were able to cover a large number of complex test cases using a relatively small testing code base.
 
 ## Automated Cross-Platform Packaging
 
-Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files. While tools exist to generate these formats ([WiXToolset](https://github.com/wixtoolset/issues/issues?q=is%3Aissue%20label%3Awip%20) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuilt](https://manp.gs/mac/1/productbuild) for macOS), they require running a series of commands that depend on the project structure.
+Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats ([WiXToolset](https://github.com/wixtoolset/issues/issues?q=is%3Aissue%20label%3Awip%20) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuilt](https://manp.gs/mac/1/productbuild) for macOS), they require running a series of single-use commands that depend heavily on project specifics.
 
 To automate the process, I developed an internal Python library to collect the binaries for each application, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
 
-A key feature was the ability to define custom logic for each component using standard Python code. This was centered around a core `Feature` class which recursively handled the logic for child features. For example, it was possible to conditionally rename specific files and folders based on the feature name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+A key feature was the ability to define custom logic for each component using standard Python files. This made it possible to conditionally move and rename specific files and folders based on the platform, component name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
 
-Other features included postinstall scripts, S3 upload/download, multi-language support, and Apple code signing.
+Other features included postinstall scripts, S3 upload/download, multi-language translation support, and Apple code signing.
 
 ## Personal Website
 
