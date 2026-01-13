@@ -8,6 +8,16 @@ title: Projects
 
 TODO
 
+## Automated Cross-Platform Packaging
+
+Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files. While tools exist to generate these formats ([WiXToolset](https://github.com/wixtoolset/issues/issues?q=is%3Aissue%20label%3Awip%20) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuilt](https://manp.gs/mac/1/productbuild) for macOS), they require running a series of commands that depend on the project structure.
+
+To automate the process, I developed an internal Python library to collect the binaries for each application, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
+
+A key feature was the ability to define custom logic for each component using standard Python code. This was centered around a core `Feature` class which recursively handled the logic for child features. For example, it was possible to conditionally rename specific files and folders based on the feature name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+
+Other features included postinstall scripts, S3 upload/download, multi-language support, and Apple code signing.
+
 ## Personal Website
 
 ![Personal website logo](/img/sflogo.svg){: style="max-width: 15%;" }
@@ -84,7 +94,7 @@ No promises, but here are some projects I'm considering:
 
 - AI-powered job search app using Tauri and React/TypeScript
   - Emphasis on finding high-alignment jobs based on user preferences and natural language reasoning
-  - Use models that preserve user privacy, from companies that practice AI safety
+  - Use models that preserve user privacy from companies that practice AI safety
   - Use a user-provided, locally stored OpenRouter API key to simplify setup, deployment, and billing
   - Never submit job applications or communications automatically, and encourage the user to review all AI-generated materials before submission
   - Nice-to-have: in-software, layout-aware, interactive AI-powered generation and editing of resumes and other documents
