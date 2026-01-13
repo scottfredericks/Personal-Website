@@ -70,7 +70,8 @@
     "lineWidth": 80,
     "proseWrap": "preserve",
     "exclude": [
-      "src/blog/index.html.vto"
+      "src/blog/index.html.vto",
+      "**/*.md"
     ]
   }
 }

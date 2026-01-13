@@ -6,23 +6,25 @@ tags: [blog_article]
 
 # Building a Personal Website - Part 1: Using Lume
 
+_Good to know before reading: basic HTML/CSS, running shell commands, editing files_
+
 _You can check out the source code for this website
 [here](https://github.com/scottfredericks/Personal-Website)._
 
 The situation: It was the middle of the Covid lockdown. I had some free time,
 and I knew enough HTML, CSS, and JavaScript to cobble a few pages together and
-to list "HTML/CSS/JavaScript" on my resume. I had some questionable but working
+to list "HTML/CSS/JavaScript" on my resume. I had some functional
 CSS code, and an AWS S3 bucket with a custom domain name.
 
 Enter: an early version of my personal website:
 
 ![Early website version](/img/blog/personal-website-part-1/early_website.png)
 
-It's... fine. It gets the job done, and it shows potential employers that I know
+It's okay. It gets the job done, and it shows potential employers that I know
 how to Google things.
 
-But I don't just want my website to be _fine_; I want it to be _kind of nice_.
-So let's add some green to the old GitHub contribution chart and learn some new
+But I don't just want my website to be _okay_. I want it to be _pretty neat_.
+So let's fill up some space in the old GitHub contribution graph and learn some new
 tools.
 
 ## Choosing the Tech
@@ -45,7 +47,7 @@ a few reasons:
 
 - I wanted to try out Deno (I've used Node before, and it works, but it can be a
   bit slow and cluttered).
-- I wanted to keep the option of using TypeScript and React for any client-side
+- I wanted the option of using TypeScript and React for any client-side
   logic in the future.
 - I don't want the final build to contain any unnecessary JavaScript, other than
   logic I explicitly add myself.
@@ -55,7 +57,7 @@ a few reasons:
 I already have experience using GitLab for Agile-style project management, but
 I'd rather not host a server or pay for a project of this size.
 
-Most of my existing personal code is already on GitHub. Their free repos and
+GitHub is similar enough to GitLab, and most of my personal code is there already. Their free repos and
 issue tracking are more than enough to track the code changes and other work. I
 don't mind making the code public (that's kind of the point of a dev portfolio),
 and in this particular case I don't really care if GitHub uses my code to train
@@ -63,22 +65,19 @@ Copilot. For more sensitive code bases, I might instead use a self-hosted GitLab
 server or a paid option.
 
 For any coding project you plan to work on more than once, I recommend using
-some kind of Git workflow to track and apply changes. Yes, you could just do
-everything in a single branch, but having a separate issue for each change and
+some kind of Git workflow to track and apply changes. In theory you could just do
+everything on a single branch, but having a separate issue for each change and
 having a branch for each issue makes it much easier to track progress over time.
 Having a searchable and taggable list of issues also makes prioritization easier
 when planning what to work on next.
 
 ### GitHub Pages for Hosting
 
-Since I'm already using GitHub, I might as well use their free hosting option
-[GitHub Pages](https://docs.github.com/en/pages). I also already have a custom
-domain (purchased through [godaddy.com](https://www.godaddy.com/)), that can be
-used with GitHub Pages.
+Since I'm already using GitHub, I might as well use their hosting service called [GitHub Pages](https://docs.github.com/en/pages). It's free, it doesn't have ads, and it supports using a custom domain.
 
-The earlier version of the site used AWS S3. That worked fine and was fairly
+The earlier version of the site used an AWS S3 bucket. That worked fine and was fairly
 inexpensive, but if I can host the site for free, that's even better. Especially
-if I end up getting more traffic later on (hopefully).
+if I (hopefully) end up getting more traffic later on.
 
 ## Setting Up Lume
 
@@ -97,23 +96,23 @@ irm https://deno.land/install.ps1 | iex
 ```
 
 Conveniently, this also adds `deno` to the path. Much simpler than installing
-`node`, by the way.
+`node`, in my opinion.
 
-Then, from within the project folder:
+Then, from within the project folder (using any shell):
 
 ```shell
 deno run -A https://lume.land/init.ts
 ```
 
-This starts an interactive prompt with a few config options. I went with "Basic"
+This starts an interactive prompt with a few options for creating the `deno` project. I went with "Basic"
 setup, and chose not to install a CMS. Note that we're using Lume 3.1.2; the
-installation options may change in other versions.
+installation options may differ slightly in other versions.
 
 This creates `_config.ts` for Lume and `deno.json` for Deno.
 
 Next, I'll install the optional
 [Lume CLI](https://lume.land/docs/overview/command-line/) so that Lume commands
-are a bit shorter to type (e.g. `lume` instead of `deno task lume`):
+are a bit shorter to type. This will let us run `lume` instead of `deno task lume`:
 
 ```shell
 deno install --allow-run --allow-env --allow-read --name lume --force --reload --global https://deno.land/x/lume_cli/mod.ts
@@ -170,7 +169,7 @@ folder structure.
 First, we need to create a `src` folder where everything will live.
 
 Within it, Lume will automatically discover `.md` files and generate HTML using
-them. To start, let's create a simple `index.md`, which will be used to generate
+them. To start, let's create a simple `src/index.md` file, which will be used to generate
 the main `index.html` (the landing page) for the site:
 
 ```md
@@ -198,7 +197,7 @@ browser:
 
 If you're not familiar with [Markdown](https://www.markdownguide.org/), it's
 just a simple markup language that's well-liked by developers. It's easy to edit
-from a text editor, and it's easy to picture how the rendered version will look
+from a text editor, and it's easy to reason about how the rendered version will look
 based on the text version. For example, this Markdown:
 
 ```md
@@ -219,9 +218,9 @@ Summary Text
 produces this HTML:
 
 ```html
-<h1>Level One Title</h1>
+<h1>Level One Header</h1>
 <p>Summary Text</p>
-<h2>Level Two Title</h2>
+<h2>Level Two Header</h2>
 <ul>
   <li>
     Item 1 <ul>
@@ -242,18 +241,18 @@ and looks like this in the browser:
 
 ![Markdown conversion](/img/blog/personal-website-part-1/markdown_conversion.png)
 
-OK, it works! But it's very ugly. We should add some CSS to make it less ugly.
+Great, our offline website works! But it's very ugly. We should add some CSS to make it less ugly.
 But before we can do that, we need to understand how Lume handles layouts,
-templates, and other resources (including CSS files).
+templates, and other resources. This is because in Lume, CSS files are handled like any other resource.
 
 ### Applying a Layout
 
 Lume uses a JavaScript-based templating engine called
 [Vento](https://vento.js.org/). If you've never used a templating tool before,
 the basic idea is that you create template files that are similar to the final
-output. Within those template files, you use code-based expressions instead of
-the actual content. Then, the temlpating engine "renders" the final output by
-evaluating the expressions and injecting the literal string values into the
+output. Within the template files, you can write code-based expressions instead of
+the actual content. Then, the templating engine "renders" the final output by
+evaluating the expressions and injecting their literal string values into the
 document.
 
 For example, the following template code:
@@ -270,14 +269,13 @@ and `birthYear`:
 ```
 
 Here, anything within the double curly braces `{{` and `}}` is treated as
-JavaScript code and converted to a string literal, which in turn becomes part of
-the output HTML.
+JavaScript code and converted to a string literal, which gets output as raw HTML. Note that the template doesn't "know" anything about the output format, so you can use expressions to generate HTML tags, comments, or any other kind of HTML code. You just need to be mindful about how you use escape characters between formats.
 
 This makes it easy to re-use parts of a file that stay the same (like the
-boilerplate elements in an HTML file) while making the other content dynamic
-(like the main text of a blog article). This becomes more relevant the more
+boilerplate elements in an HTML file) while making the main content dynamic
+(like the text and images for your blog articles). This becomes more relevant the more
 pages you have in your site. If you need to update the document layout for 20
-similar pages, templating allows you to update a single template file instead of
+similar pages, then templating allows you to update a single template file instead of
 editing all 20 pages separately.
 
 Let's use a template to define the basic HTML structure that most of our pages
@@ -298,13 +296,15 @@ let's create a file called `src/_includes/main.html.vto`:
 </html>
 ```
 
+The final HTML file should have more info in the `head` section, but that can be added later.
+
 Note the `.html.vto` extension. We could have called the file `main.vto`, but
-using `.html.vto` is good practice since it indicates that the output file type
+using `.html.vto` makes it easier to see that the output file type
 will be `.html`.
 
 Within our template, we use the variables `title` and `content`. `title` is just
 a regular variable that we will define within the `index.md` file. `content` is
-a built-in variable that stores the result of converting the source file
+a built-in variable that stores the rendered string value obtained by converting the source file
 (Markdown) to the template file type (HTML).
 
 Next, to have our `index.md` file use this layout, we can specify the built-in
@@ -317,10 +317,9 @@ title: About Me
 ---
 ```
 
-Note that `title` here is also a variable, but it's not built-in like `layout`,
-and it doesn't have any special behavior. You can define whatever other
-variables you like and use them within temlpate files the same way we use
-`title`.
+You can define whatever other
+variables you like and use them within template files the same way we use
+`title` and `content`.
 
 Now the page includes the `h1` element added by the layout, and uses the page
 title defined at the top of `index.md`:
@@ -339,11 +338,11 @@ we want to apply the defaults in. Let's create `src/_data.yml`:
 layout: main.html.vto
 ```
 
-Now we can remove the `layout` line from the top of `index.html`, since a
+Now we can remove the `layout` line from the top of `index.md`, since a
 default value will be pulled from `_data.yml`. If you reload the page, you'll
 see that the layout is still applied.
 
-This extends to all child directories by default, but it can be overridden by
+These defaults extend to all child directories by default, but they can be overridden by
 putting another `_data.yml` file within the child directories you want to
 override. For example, if you wanted a `blog` directory where all of the
 articles use a different layout, you could create `src/blog/_data.yml`:
@@ -362,8 +361,7 @@ All files in that directory would then use the layout defined in
 
 OK, now we know how to use (and re-use) HTML. Let's add some CSS.
 
-Other than the option to use templating, CSS works the same way it does outside
-of Lume. Let's add a CSS file at `src/css/main.css`. The exact file path doesn't
+Other than the option to use templating, CSS in Lume works the same way it does in standard web dev. Let's add a CSS file at `src/css/main.css`. The exact file path doesn't
 matter; I just like having a dedicated `css` folder because it keeps our CSS
 files organized. For now, we'll just specify the font:
 
@@ -373,7 +371,7 @@ body {
 }
 ```
 
-Now we can link the CSS file in the usual way within the HTML temlpate file, by
+Now we can link the CSS file in the usual way within the HTML template file, by
 adding a `link` element inside of the `head` element and specifying which CSS
 file to use:
 
@@ -402,8 +400,9 @@ should see the updated styling in the browser:
 
 Note that when we apply styling, we want to target the HTML elements in the
 final output (in the `_site` folder), rather than the contents of the source
-Markdown files. So, for example, to target all level 1 headers in CSS, you would
-use a block like
+Markdown files. Our CSS code only "knows about" the rendered HTML, not Markdown or any other Lume-specific features.
+
+So, for example, to target all level 1 headers in CSS, you would use `h1`, not `#`:
 
 ```css
 h1 {
@@ -419,12 +418,12 @@ and not
 }
 ```
 
-Remember: the website consists of everything that gets output to the `_site`
+If you get confused, just remember that the final website consists of everything that gets output to the `_site`
 folder, and nothing else.
 
 #### Adding JavaScript
 
-JavaScript works more or less the same way; we can add all JavaScript files
+JavaScript works more or less the same way as CSS; we can add all JavaScript files
 within a `src/js` folder, and add these files to the build using another line in
 `_config.ts`:
 
@@ -433,7 +432,11 @@ site.add("/js");
 ```
 
 Then we can reference these js files using the `<script>` element like we
-normally would.
+normally would. For example:
+
+```html
+<script src="/js/my_script.js"></script>
+```
 
 #### Adding Images
 
@@ -450,66 +453,68 @@ site.add("/img");
 Then, we can add images within `md` files using the following syntax:
 
 ```md
-![alt text](/img/image.png)
+![alt text](/img/filename.png)
 ```
 
-Here, we expect an image to exist at `src/img/image.png`. Note the `/` before
-the file path, which is necessary to reference the output root (the `_site`
+Here, we expect an image to exist at `src/img/filename.png`. Note the `/` at the beginning of the file path, which is necessary to reference the output root (the `_site`
 folder). We can also specify custom
 [alt text](https://www.w3schools.com/tags/att_img_alt.asp), which is used in the
 event that the image does not load correctly.
 
-This will insert an `<img>` tag using a relative URL into the output HTML.
+This will insert an `<img>` tag into the output HTML using a relative URL.
 
 ### Adding Blog Articles Programmatically
 
-Great; now we have a basic project structure, and we know how to work with all
+Great, now we have a basic project structure, and we know how to work with all
 of the relevant file types. But in order to get the most out of a static site
-generator, we need to take advantage of dynamic content generation at compile
+generator, we should try generating some dynamic content at compile
 time.
 
 A good use case for this is a blog, where adding a blog article `.md` file
-should not only create a new URL in the site, but should also update the list of
+should not only create a new URL in the site, but also update the list of
 blog articles on the main `/blog` page.
 
 To do this, let's create a basic layout for our blog list page at
 `src/blog/index.html.vto`:
 
 ```html
---- title: Blog layout: main.html.vto url: /blog/ ---
+---
+title: Blog
+layout: main.html.vto
+url: /blog/
+---
 
 <h1>Latest Articles</h1>
 
 <!-- Articles will go here -->
 ```
 
-This is rendered to `<domain name>/blog/index.html`. By adding `url: /blog/`, we
+This will be rendered to `<domain name>/blog/index.html`, where `<domain name>` is whatever our public site URL is. By adding `url: /blog/`, we
 can properly utilize pretty URLs so that the resulting URL is just
 `<domain name>/blog/`.
 
-To designate blog articles, we'll add a `blog_article` tag to every article
+To designate files as blog articles, we'll add a `blog_article` tag to every article
 `.md` file that we want to appear in the list. We'll also add a `date` variable
 that we can list at the top of the article and use for sorting. Here's the top
-of an article .md file:
+of an article `.md` file:
 
 ```md
 ---
 title: "Building a Personal Website - Part 1: Using Lume"
-date: 01-05-2026 12:00
+date: 2026-01-05 12:00
 tags: [blog_article]
 ---
 ```
 
-Note that JavaScript has some quirks when parsing dates. If we had used
-"2026-01-05", then the date would be rendered as "January 4th, 2026", which we
-don't want. Adding `12:00` for noon gets around this and correctly renders
-"January 5th, 2026".
+Note that JavaScript has some quirks when parsing dates. If we had just used
+"2026-01-05", then the date would be rendered as "January 4th, 2026".
+Adding `12:00` for noon gets around this and correctly renders "January 5th, 2026".
 
 Also note that if the title includes certain characters like `:`, you'll need to
 wrap it in quotes.
 
 In order to work with dates more effectively, let's add the
-[Lume Date plugin](https://v1.lume.land/plugins/date/) by adding a couple of
+[Lume Date plugin](https://lume.land/plugins/date/) by adding a couple of
 lines to `_config.ts` and restarting `lume`:
 
 ```typescript
@@ -530,20 +535,35 @@ We can do this using a combination of templating and JavaScript logic. Here's
 the complete `src/blog/index.html.vto`:
 
 ```html
---- title: Blog layout: main.html.vto url: /blog/ ---
+---
+title: Blog
+layout: main.html.vto
+url: /blog/
+---
 
 <h1>Latest Articles</h1>
 
-{{# Get list of articles based on tag, in descending date order #}} {{ set
-articles = search.pages("blog_article", "date=desc") }} {{ set currentYear =
-null }} {{ for article of articles }} {{# Check whether the year has changed #}}
-{{ set articleYear = article.date.getFullYear() }} {{ if articleYear !=
-currentYear }} {{# Close previous years if this isn't the first year #}} {{ if
-currentYear != null }}
-</ul> {{ /if }} {{# Create a section for the new year #}}
-<h2>{{ articleYear }}</h2>
-<ul>
-  {{ set currentYear = articleYear }} {{ /if }} {{# Render each article #}}
+{{# Get list of articles based on tag, in descending date order #}}
+{{ set articles = search.pages("blog_article", "date=desc") }}
+{{ set currentYear = null }}
+
+{{ for article of articles }}
+  {{# Check whether the year has changed #}}
+  {{ set articleYear = article.date.getFullYear() }}
+  {{ if articleYear != currentYear }}
+    {{# Close previous years if this isn't the first year #}}
+    {{ if currentYear != null }}
+      </ul>
+    {{ /if }}
+
+    {{# Create a section for the new year #}}
+    <h2>{{ articleYear }}</h2>
+    <ul>
+
+    {{ set currentYear = articleYear }}
+  {{ /if }}
+  
+  {{# Render each article #}}
   <li>
     <article>
       <p>
@@ -554,9 +574,11 @@ currentYear != null }}
       </p>
     </article>
   </li>
-  {{ /for }} {{# Close the last list tag if there were any articles #}} {{ if
-  articles.length > 0 }}
-</ul>
+{{ /for }}
+
+{{# Close the last list tag if there were any articles #}}
+{{ if articles.length > 0 }}
+  </ul>
 {{ /if }}
 ```
 
@@ -565,15 +587,19 @@ date. We keep track of the year for each article in the `currentYear` variable
 and update it each time we find a new year.
 
 ```html
-{{ set articles = search.pages("blog_article", "date=desc") }} {{ set
-currentYear = null }} {{ for article of articles }} ... {{ /for }}
+{{ set articles = search.pages("blog_article", "date=desc") }}
+{{ set currentYear = null }}
+
+{{ for article of articles }}
+  ...
+{{ /for }}
 ```
 
 For each article inside of the `for` loop, we want to check whether we've
-started a new year or not. If we have, we create a new `<ul>` element, and if
+started a new year or not. If we have, we create new `<h2>` and `<ul>` elements, and if
 needed, close the previous `<ul>`. We also update `currentYear`:
 
-```
+```html
   {{ set articleYear = article.date.getFullYear() }}
 
   {{ if articleYear != currentYear }}
@@ -590,7 +616,7 @@ needed, close the previous `<ul>`. We also update `currentYear`:
 
 Then, for each article, we generate a list element including the date and title:
 
-```
+```html
 <li>
   <article>
     <p>
@@ -618,7 +644,10 @@ be nearly identical to our main layout (which we can inherit), but before the
 content, we'll insert a single line with the date:
 
 ```html
---- layout: main.html.vto ---
+---
+layout: main.html.vto
+---
+
 <em>{{ date |> date('HUMAN_DATE') }}</em><br />
 {{ content }}
 ```
@@ -635,9 +664,10 @@ Looking at the article in the browser:
 
 ## Conclusion
 
-Great! We finally have all of the same functionality that raw
-HTML/CSS/JavaScript has, but with a templating framework and live updates. Now
-we can focus on the actual content of the site.
+Great! We've set up Lume, created layouts and styling templates, and built a dynamic blog.
+We finally have all of the same functionality that raw
+HTML/CSS/JavaScript has, but with a templating framework and live updates.
+Now we are free to focus on the actual content of the site.
 
-In the next article, we'll look at desigining a theme with a dynamic background
+In the next article, we'll look at designing a theme with a dynamic background
 using JavaScript and CSS.

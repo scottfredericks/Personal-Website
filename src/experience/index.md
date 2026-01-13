@@ -1,6 +1,7 @@
 ---
 title: Experience
 layout: experience.html.vto
+url: /experience/
 ---
 
 # Experience
