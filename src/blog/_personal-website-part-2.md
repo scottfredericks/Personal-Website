@@ -1,17 +1,19 @@
 ---
 title: "Building a Personal Website - Part 2: Designing a Theme"
-date: 2026-01-06 12:00
+date: 2026-01-13 12:00
 tags: [blog_article]
 ---
 
 # Building a Personal Website - Part 2: Designing a Theme
 
-_See the source repo
+_Good to know before reading: basic HTML/CSS, basic JavaScript, editing files_
+
+_You can check out the source code for this website
 [here](https://github.com/scottfredericks/Personal-Website)._
 
 ## Inspiration
 
-The layout for my old website was a bit boring. I like simplicity and neutral
+The layout for my old website was a bit boring. I generally like simplicity and neutral
 tones, but I wanted more individuality and better use of accents. I also wanted
 to combine the unique parts of my background in a sleek, modern way.
 
@@ -40,30 +42,22 @@ over the top to reduce the sense of clutter, and to use light brown as an accent
 color in the foreground. This background can be rendered in a canvas element in
 the background, with the rendering logic in a separate script file.
 
-## CSS
-
-We also want the background to stay fixed while the rest of the content scrolls
-over it. We can use `position::fixed` to keep the canvas separate from the rest
-of the rendering, and make the canvas take up 100% of the screen.
-
-This can be added to the main HTML template with just a few lines:
-
-```html
-TODO
-```
-
-## Adding a Blog Post
+## Choosing Colors
 
 TODO
 
-## Automating the Build
+## Main CSS
 
 TODO
 
-## Setting up GitHub Pages
+## Adding a Navbar
 
 TODO
 
-## Using a Custom Domain
+## Adding a Dark Theme Toggle
+
+TODO
+
+## Adding a Dynamic Background
 
 TODO
