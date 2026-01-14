@@ -247,18 +247,20 @@ class Crawler {
   }
 }
 
+function ensureCanvas() {
+  if (!offscreenCanvas) {
+    const size = PATTERN_PIXEL_SIZE;
+    offscreenCanvas = new OffscreenCanvas(size, size);
+    ctx = offscreenCanvas.getContext("2d");
+  }
+}
+
 // Message handling
 
 self.onmessage = function (e) {
   const data = e.data;
 
-  if (data.type === "init") {
-    const size = PATTERN_PIXEL_SIZE;
-    offscreenCanvas = new OffscreenCanvas(size, size);
-    ctx = offscreenCanvas.getContext("2d");
-    currentExternalRequestId = data.id;
-    applyTheme(data.theme);
-  } else if (data.type === "pause") {
+  if (data.type === "pause") {
     if (data.id === currentExternalRequestId) {
       isPaused = true;
     }
@@ -282,6 +284,8 @@ self.onmessage = function (e) {
       }
     }
   } else {
+    // Any other message type triggers a new generation:
+    // "init", "resize", "themeChange", "finished_regen", etc.
     if (typeof data.id !== "undefined") {
       currentExternalRequestId = data.id;
     }
@@ -289,6 +293,8 @@ self.onmessage = function (e) {
     isPaused = false;
     isWaitingForAck = false;
     pendingFrame = null;
+
+    ensureCanvas();
     if (data.theme) applyTheme(data.theme);
     startAnimation();
   }
@@ -464,7 +470,7 @@ function flushRenderQueues() {
     ctx.strokeStyle = color;
     ctx.fillStyle = color; // Needed for the manual circles
 
-    // Draw the Lines
+    // Draw the lines
     ctx.beginPath();
     for (let i = 0; i < strokes.length; i++) {
       const s = strokes[i];

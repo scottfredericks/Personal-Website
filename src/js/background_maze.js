@@ -4,25 +4,33 @@
   const container = document.getElementById("background-maze-div");
 
   const ctx = htmlCanvas.getContext("2d", { alpha: true });
-  const FADE_OUT_DURATION = 800;
+  const FADE_DURATION = 800;
   const RESIZE_DEBOUNCE_TIME = 300;
   const AUTO_REGEN_DELAY = 1000;
 
   const worker = new Worker("/js/background_maze_worker.js");
 
-  let pendingTimeout;
-  let autoRegenTimeout;
-  let isFirstLoad = true;
+  // Visual state machine: "hidden" | "fading-in" | "visible" | "fading-out"
+  let visualState = "hidden";
+
+  // Pending operations
+  let debounceTimeout = null;
+  let autoRegenTimeout = null;
+  let transitionTimeout = null;
+
+  // Generation tracking
   let currentRequestId = 0;
 
-  let lastWidth = 0;
-  let lastHeight = 0;
-
+  // Rendering state
   let currentBitmap = null;
   let currentHeads = [];
   let isRendering = false;
   let isShuttingDown = false;
   let currentTheme = "dark";
+
+  // Size tracking
+  let lastWidth = 0;
+  let lastHeight = 0;
 
   function getTheme() {
     const val = document.documentElement.getAttribute("data-theme");
@@ -30,29 +38,54 @@
   }
 
   function updateCanvasSize() {
-    // Since CSS handles the display size (width: 100%, height: 100% of container),
-    // we just need to match the internal resolution to the display size.
-    // We use clientWidth/Height of the canvas element itself (which fills the div).
-
     const w = htmlCanvas.clientWidth;
     const h = htmlCanvas.clientHeight;
 
-    // Only update if dimensions actually changed to avoid flicker
     if (htmlCanvas.width !== w || htmlCanvas.height !== h) {
       htmlCanvas.width = w;
       htmlCanvas.height = h;
     }
   }
 
-  function triggerWorkerGeneration(type) {
+  function setVisualState(newState) {
+    if (isShuttingDown) return;
+    if (visualState === newState) return;
+
+    clearTimeout(transitionTimeout);
+    visualState = newState;
+
+    switch (newState) {
+      case "fading-out":
+        htmlCanvas.classList.remove("loaded");
+        transitionTimeout = setTimeout(() => {
+          setVisualState("hidden");
+        }, FADE_DURATION);
+        break;
+
+      case "hidden":
+        // Nothing to do here; generation is triggered externally
+        break;
+
+      case "fading-in":
+        htmlCanvas.classList.add("loaded");
+        transitionTimeout = setTimeout(() => {
+          setVisualState("visible");
+        }, FADE_DURATION);
+        break;
+
+      case "visible":
+        // Nothing to do here
+        break;
+    }
+  }
+
+  function startGeneration(type) {
     if (isShuttingDown) return;
 
-    const theme = getTheme();
-    currentTheme = theme;
+    currentTheme = getTheme();
 
-    // Critical: If we receive a manual trigger (theme, resize) while waiting
-    // to auto-regenerate, cancel the auto-regeneration so we don't fade out prematurely.
     clearTimeout(autoRegenTimeout);
+    updateCanvasSize();
 
     if (currentBitmap) {
       currentBitmap.close();
@@ -61,11 +94,36 @@
 
     worker.postMessage({
       type: type,
-      theme: theme,
+      theme: currentTheme,
       id: currentRequestId,
     });
+  }
 
-    isFirstLoad = false;
+  function scheduleRegeneration(type, delay) {
+    clearTimeout(debounceTimeout);
+    clearTimeout(autoRegenTimeout);
+
+    // Increment request ID immediately to reject any frames from the old generation
+    currentRequestId++;
+
+    debounceTimeout = setTimeout(() => {
+      // Ensure we're in hidden state before starting
+      if (visualState === "hidden") {
+        startGeneration(type);
+      } else {
+        // Wait for fade-out to complete, then check again
+        const waitForHidden = () => {
+          if (isShuttingDown) return;
+          if (visualState === "hidden") {
+            startGeneration(type);
+          } else {
+            // Poll until hidden (transition timeout will eventually get us there)
+            setTimeout(waitForHidden, 50);
+          }
+        };
+        waitForHidden();
+      }
+    }, delay);
   }
 
   function startRenderLoop() {
@@ -160,15 +218,14 @@
     }
 
     const data = e.data;
+
+    // Ignore messages from old generations
     if (data.id !== currentRequestId) {
       if (data.bitmap) data.bitmap.close();
       return;
     }
 
     if (data.type === "started") {
-      requestAnimationFrame(() => {
-        htmlCanvas.classList.add("loaded");
-      });
       currentHeads = [];
     } else if (data.type === "render") {
       if (currentBitmap) currentBitmap.close();
@@ -177,27 +234,26 @@
         currentHeads = data.heads;
       }
 
-      // Signal worker that we're ready for the next frame
+      // Start fade-in on first frame if we're hidden
+      if (visualState === "hidden") {
+        // Double rAF to ensure browser is ready for transition
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (data.id === currentRequestId && visualState === "hidden") {
+              setVisualState("fading-in");
+            }
+          });
+        });
+      }
+
       worker.postMessage({ type: "ack", id: currentRequestId });
     } else if (data.type === "finished") {
-      // Maze generation is complete.
-      //   Wait for AUTO_REGEN_DELAY
-      //   Remove loaded class (fade out)
-      //   Wait for FADE_OUT_DURATION
-      //   Trigger regenerate
-
       autoRegenTimeout = setTimeout(() => {
         if (isShuttingDown) return;
-        htmlCanvas.classList.remove("loaded");
-
-        autoRegenTimeout = setTimeout(() => {
-          if (isShuttingDown) return;
-          // Only trigger if we are still on the same request ID
-          // (though triggerWorkerGeneration handles clearing the timeout too)
-          if (currentRequestId === data.id) {
-            triggerWorkerGeneration("finished_regen");
-          }
-        }, FADE_OUT_DURATION);
+        if (data.id === currentRequestId) {
+          setVisualState("fading-out");
+          scheduleRegeneration("finished_regen", FADE_DURATION);
+        }
       }, AUTO_REGEN_DELAY);
     }
   };
@@ -205,8 +261,9 @@
   function cleanup() {
     isShuttingDown = true;
 
-    clearTimeout(pendingTimeout);
+    clearTimeout(debounceTimeout);
     clearTimeout(autoRegenTimeout);
+    clearTimeout(transitionTimeout);
 
     observer.disconnect();
     themeObserver.disconnect();
@@ -229,14 +286,13 @@
     }
   }
 
-  updateCanvasSize();
+  // Initialize
   startRenderLoop();
-  triggerWorkerGeneration("init");
+  startGeneration("init");
 
   const observer = new ResizeObserver(() => {
     if (isShuttingDown) return;
 
-    // Measure client dimensions of the container
     const w = container.clientWidth;
     const h = container.clientHeight;
 
@@ -244,22 +300,19 @@
     lastWidth = w;
     lastHeight = h;
 
-    updateCanvasSize();
-
-    currentRequestId++;
-    clearTimeout(pendingTimeout);
     clearTimeout(autoRegenTimeout);
 
-    if (isFirstLoad) {
-      pendingTimeout = setTimeout(() => {
-        triggerWorkerGeneration("resize");
-      }, 100);
-    } else {
-      htmlCanvas.classList.remove("loaded");
-      pendingTimeout = setTimeout(() => {
-        triggerWorkerGeneration("resize");
-      }, RESIZE_DEBOUNCE_TIME);
+    // Start fade-out immediately if not already fading out or hidden
+    if (visualState === "visible" || visualState === "fading-in") {
+      setVisualState("fading-out");
     }
+
+    // Schedule regeneration with debounce
+    // Use the longer of debounce time or fade duration to ensure we're hidden
+    scheduleRegeneration(
+      "resize",
+      Math.max(RESIZE_DEBOUNCE_TIME, FADE_DURATION),
+    );
   });
   observer.observe(container);
 
@@ -277,25 +330,19 @@
     });
 
     if (themeChanged) {
-      currentRequestId++;
-      clearTimeout(pendingTimeout);
       clearTimeout(autoRegenTimeout);
 
-      if (!isFirstLoad) {
-        htmlCanvas.classList.remove("loaded");
+      // Start fade-out immediately if not already fading out or hidden
+      if (visualState === "visible" || visualState === "fading-in") {
+        setVisualState("fading-out");
       }
 
-      pendingTimeout = setTimeout(() => {
-        triggerWorkerGeneration("themeChange");
-      }, FADE_OUT_DURATION);
+      scheduleRegeneration("themeChange", FADE_DURATION);
     }
   });
   themeObserver.observe(document.documentElement, { attributes: true });
 
-  // Clean up resources when navigating away or closing the page
   window.addEventListener("pagehide", cleanup);
   window.addEventListener("beforeunload", cleanup);
-
-  // Pause/resume generation based on page visibility
   document.addEventListener("visibilitychange", handleVisibilityChange);
 })();
