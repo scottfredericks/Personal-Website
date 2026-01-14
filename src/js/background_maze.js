@@ -33,9 +33,9 @@
   // Used to ensure we only fade in after content is ready to display.
   let hasReceivedFirstFrame = false;
 
-  // Tracks whether a resize/regeneration is in progress, preventing fade-in
-  // until the transition is complete.
-  let isTransitioning = false;
+  // Timestamp when fade-out started. Used to calculate remaining fade time
+  // when multiple resize events occur.
+  let fadeOutStartTime = null;
 
   function getTheme() {
     const val = document.documentElement.getAttribute("data-theme");
@@ -79,11 +79,11 @@
     // Reset the first frame flag when starting a new generation
     hasReceivedFirstFrame = false;
 
+    // Clear fade-out tracking since we're starting fresh
+    fadeOutStartTime = null;
+
     // Now start accepting frames from the new request ID
     acceptingFramesFromId = currentRequestId;
-
-    // Clear transitioning flag - we're ready to fade in once content arrives
-    isTransitioning = false;
 
     worker.postMessage({
       type: type,
@@ -204,14 +204,19 @@
         currentHeads = data.heads;
       }
 
-      // Add loaded class on first frame to trigger fade-in,
-      // but only if we're not in the middle of a transition
-      if (!hasReceivedFirstFrame && !isTransitioning) {
+      // Add loaded class on first frame to trigger fade-in
+      if (!hasReceivedFirstFrame) {
         hasReceivedFirstFrame = true;
+        const frameRequestId = data.id;
+
+        // Use a double requestAnimationFrame to ensure the browser has
+        // fully processed the current frame and is ready for the transition
         requestAnimationFrame(() => {
-          if (data.id === currentRequestId && !isTransitioning) {
-            htmlCanvas.classList.add("loaded");
-          }
+          requestAnimationFrame(() => {
+            if (frameRequestId === currentRequestId && !isShuttingDown) {
+              htmlCanvas.classList.add("loaded");
+            }
+          });
         });
       }
 
@@ -291,20 +296,26 @@
     // Reset first frame flag immediately on resize
     hasReceivedFirstFrame = false;
 
-    // Mark that we're in a transition period
-    isTransitioning = true;
-
     if (isFirstLoad) {
       pendingTimeout = setTimeout(() => {
         triggerWorkerGeneration("resize");
       }, 100);
     } else {
-      htmlCanvas.classList.remove("loaded");
+      const now = performance.now();
 
-      // Wait for both the debounce period and the fade-out to complete.
-      // Use whichever is longer to ensure the canvas is fully faded out
-      // before starting the new generation.
-      const delay = Math.max(RESIZE_DEBOUNCE_TIME, FADE_OUT_DURATION);
+      // Only start fade-out if not already fading out
+      if (fadeOutStartTime === null) {
+        fadeOutStartTime = now;
+        htmlCanvas.classList.remove("loaded");
+      }
+
+      // Calculate how much time has elapsed since fade-out started
+      const elapsed = now - fadeOutStartTime;
+      const remainingFadeTime = Math.max(0, FADE_OUT_DURATION - elapsed);
+
+      // Wait for both the debounce period and the remaining fade-out time
+      const delay = Math.max(RESIZE_DEBOUNCE_TIME, remainingFadeTime);
+
       pendingTimeout = setTimeout(() => {
         triggerWorkerGeneration("resize");
       }, delay);
@@ -333,8 +344,8 @@
       // Reset first frame flag on theme change
       hasReceivedFirstFrame = false;
 
-      // Mark that we're in a transition period
-      isTransitioning = true;
+      // Reset fade-out tracking for theme changes
+      fadeOutStartTime = null;
 
       if (!isFirstLoad) {
         htmlCanvas.classList.remove("loaded");
