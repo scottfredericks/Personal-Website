@@ -38,12 +38,17 @@ let currentExternalRequestId = 0;
 
 let currentPalette = [];
 let currentBackgroundColor = "#000000";
-let animationFrameId;
+let animationFrameId = null;
 
 // State arrays
 let grid, degrees, colorMap;
 let totalSeedSlots = 0;
 let strokeQueue = [];
+
+// Flow control state
+let isPaused = false;
+let isWaitingForAck = false;
+let pendingFrame = null;
 
 class Crawler {
   constructor(x, y, dir, forceLen, colorIdx) {
@@ -251,12 +256,39 @@ self.onmessage = function (e) {
     const size = PATTERN_PIXEL_SIZE;
     offscreenCanvas = new OffscreenCanvas(size, size);
     ctx = offscreenCanvas.getContext("2d");
+    currentExternalRequestId = data.id;
     applyTheme(data.theme);
+  } else if (data.type === "pause") {
+    if (data.id === currentExternalRequestId) {
+      isPaused = true;
+    }
+  } else if (data.type === "resume") {
+    if (data.id === currentExternalRequestId) {
+      isPaused = false;
+      if (pendingFrame) {
+        const resumeFrame = pendingFrame;
+        pendingFrame = null;
+        resumeFrame();
+      }
+    }
+  } else if (data.type === "ack") {
+    // Main thread acknowledged receipt of the last bitmap
+    if (data.id === currentExternalRequestId) {
+      isWaitingForAck = false;
+      if (pendingFrame && !isPaused) {
+        const nextFrame = pendingFrame;
+        pendingFrame = null;
+        nextFrame();
+      }
+    }
   } else {
     if (typeof data.id !== "undefined") {
       currentExternalRequestId = data.id;
     }
     currentJobId++;
+    isPaused = false;
+    isWaitingForAck = false;
+    pendingFrame = null;
     if (data.theme) applyTheme(data.theme);
     startAnimation();
   }
@@ -320,10 +352,26 @@ function startAnimation() {
     }
   }
 
-  if (animationFrameId) cancelAnimationFrame(animationFrameId);
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
 
   function loop() {
+    // Job was superseded by a new request
     if (currentJobId !== jobId) return;
+
+    // Paused due to page visibility change
+    if (isPaused) {
+      pendingFrame = loop;
+      return;
+    }
+
+    // Waiting for main thread to acknowledge previous frame
+    if (isWaitingForAck) {
+      pendingFrame = loop;
+      return;
+    }
 
     let active = false;
 
@@ -352,7 +400,15 @@ function startAnimation() {
         c: currentPalette[c.colorIdx],
       }));
 
+      isWaitingForAck = true;
+
       self.createImageBitmap(offscreenCanvas).then((bitmap) => {
+        // Check if job is still valid before posting
+        if (currentJobId !== jobId) {
+          bitmap.close();
+          return;
+        }
+
         self.postMessage({
           type: "render",
           bitmap: bitmap,
@@ -367,6 +423,11 @@ function startAnimation() {
     } else {
       // Send one final frame with heads: [] to turn off the lights
       self.createImageBitmap(offscreenCanvas).then((bitmap) => {
+        if (currentJobId !== jobId) {
+          bitmap.close();
+          return;
+        }
+
         self.postMessage({
           type: "render",
           bitmap: bitmap,

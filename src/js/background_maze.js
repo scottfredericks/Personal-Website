@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-window
+// deno-lint-ignore-file no-window no-window-prefix
 (function () {
   const htmlCanvas = document.getElementById("background-maze-canvas");
   const container = document.getElementById("background-maze-div");
@@ -21,6 +21,7 @@
   let currentBitmap = null;
   let currentHeads = [];
   let isRendering = false;
+  let isShuttingDown = false;
   let currentTheme = "dark";
 
   function getTheme() {
@@ -44,6 +45,8 @@
   }
 
   function triggerWorkerGeneration(type) {
+    if (isShuttingDown) return;
+
     const theme = getTheme();
     currentTheme = theme;
 
@@ -70,6 +73,11 @@
     isRendering = true;
 
     function frame() {
+      if (isShuttingDown) {
+        isRendering = false;
+        return;
+      }
+
       if (!currentBitmap) {
         ctx.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
         requestAnimationFrame(frame);
@@ -146,6 +154,11 @@
   }
 
   worker.onmessage = (e) => {
+    if (isShuttingDown) {
+      if (e.data.bitmap) e.data.bitmap.close();
+      return;
+    }
+
     const data = e.data;
     if (data.id !== currentRequestId) {
       if (data.bitmap) data.bitmap.close();
@@ -163,6 +176,9 @@
       if (data.heads) {
         currentHeads = data.heads;
       }
+
+      // Signal worker that we're ready for the next frame
+      worker.postMessage({ type: "ack", id: currentRequestId });
     } else if (data.type === "finished") {
       // Maze generation is complete.
       //   Wait for AUTO_REGEN_DELAY
@@ -171,9 +187,11 @@
       //   Trigger regenerate
 
       autoRegenTimeout = setTimeout(() => {
+        if (isShuttingDown) return;
         htmlCanvas.classList.remove("loaded");
 
         autoRegenTimeout = setTimeout(() => {
+          if (isShuttingDown) return;
           // Only trigger if we are still on the same request ID
           // (though triggerWorkerGeneration handles clearing the timeout too)
           if (currentRequestId === data.id) {
@@ -184,11 +202,40 @@
     }
   };
 
+  function cleanup() {
+    isShuttingDown = true;
+
+    clearTimeout(pendingTimeout);
+    clearTimeout(autoRegenTimeout);
+
+    observer.disconnect();
+    themeObserver.disconnect();
+
+    if (currentBitmap) {
+      currentBitmap.close();
+      currentBitmap = null;
+    }
+
+    worker.terminate();
+  }
+
+  function handleVisibilityChange() {
+    if (isShuttingDown) return;
+
+    if (document.visibilityState === "hidden") {
+      worker.postMessage({ type: "pause", id: currentRequestId });
+    } else if (document.visibilityState === "visible") {
+      worker.postMessage({ type: "resume", id: currentRequestId });
+    }
+  }
+
   updateCanvasSize();
   startRenderLoop();
   triggerWorkerGeneration("init");
 
   const observer = new ResizeObserver(() => {
+    if (isShuttingDown) return;
+
     // Measure client dimensions of the container
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -217,6 +264,8 @@
   observer.observe(container);
 
   const themeObserver = new MutationObserver((mutations) => {
+    if (isShuttingDown) return;
+
     let themeChanged = false;
     mutations.forEach((mutation) => {
       if (
@@ -242,4 +291,11 @@
     }
   });
   themeObserver.observe(document.documentElement, { attributes: true });
+
+  // Clean up resources when navigating away or closing the page
+  window.addEventListener("pagehide", cleanup);
+  window.addEventListener("beforeunload", cleanup);
+
+  // Pause/resume generation based on page visibility
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 })();
