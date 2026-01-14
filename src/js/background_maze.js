@@ -15,6 +15,11 @@
   let isFirstLoad = true;
   let currentRequestId = 0;
 
+  // The request ID that we're currently accepting render frames from.
+  // This is separate from currentRequestId to allow the old generation
+  // to continue displaying during fade-out.
+  let acceptingFramesFromId = 0;
+
   let lastWidth = 0;
   let lastHeight = 0;
 
@@ -23,6 +28,14 @@
   let isRendering = false;
   let isShuttingDown = false;
   let currentTheme = "dark";
+
+  // Tracks whether we've received the first render frame for the current request.
+  // Used to ensure we only fade in after content is ready to display.
+  let hasReceivedFirstFrame = false;
+
+  // Tracks whether a resize/regeneration is in progress, preventing fade-in
+  // until the transition is complete.
+  let isTransitioning = false;
 
   function getTheme() {
     const val = document.documentElement.getAttribute("data-theme");
@@ -50,14 +63,27 @@
     const theme = getTheme();
     currentTheme = theme;
 
-    // Critical: If we receive a manual trigger (theme, resize) while waiting
+    // Critical: if we receive a manual trigger (theme, resize) while waiting
     // to auto-regenerate, cancel the auto-regeneration so we don't fade out prematurely.
     clearTimeout(autoRegenTimeout);
+
+    // Update canvas size here, right before starting new generation,
+    // rather than during the fade-out period
+    updateCanvasSize();
 
     if (currentBitmap) {
       currentBitmap.close();
       currentBitmap = null;
     }
+
+    // Reset the first frame flag when starting a new generation
+    hasReceivedFirstFrame = false;
+
+    // Now start accepting frames from the new request ID
+    acceptingFramesFromId = currentRequestId;
+
+    // Clear transitioning flag - we're ready to fade in once content arrives
+    isTransitioning = false;
 
     worker.postMessage({
       type: type,
@@ -160,15 +186,16 @@
     }
 
     const data = e.data;
-    if (data.id !== currentRequestId) {
+
+    // Reject frames that aren't from the generation we're currently accepting
+    if (data.id !== acceptingFramesFromId) {
       if (data.bitmap) data.bitmap.close();
       return;
     }
 
     if (data.type === "started") {
-      requestAnimationFrame(() => {
-        htmlCanvas.classList.add("loaded");
-      });
+      // Worker has begun generation. We wait for the first render frame
+      // to arrive before fading in.
       currentHeads = [];
     } else if (data.type === "render") {
       if (currentBitmap) currentBitmap.close();
@@ -177,8 +204,19 @@
         currentHeads = data.heads;
       }
 
+      // Add loaded class on first frame to trigger fade-in,
+      // but only if we're not in the middle of a transition
+      if (!hasReceivedFirstFrame && !isTransitioning) {
+        hasReceivedFirstFrame = true;
+        requestAnimationFrame(() => {
+          if (data.id === currentRequestId && !isTransitioning) {
+            htmlCanvas.classList.add("loaded");
+          }
+        });
+      }
+
       // Signal worker that we're ready for the next frame
-      worker.postMessage({ type: "ack", id: currentRequestId });
+      worker.postMessage({ type: "ack", id: acceptingFramesFromId });
     } else if (data.type === "finished") {
       // Maze generation is complete.
       //   Wait for AUTO_REGEN_DELAY
@@ -223,13 +261,12 @@
     if (isShuttingDown) return;
 
     if (document.visibilityState === "hidden") {
-      worker.postMessage({ type: "pause", id: currentRequestId });
+      worker.postMessage({ type: "pause", id: acceptingFramesFromId });
     } else if (document.visibilityState === "visible") {
-      worker.postMessage({ type: "resume", id: currentRequestId });
+      worker.postMessage({ type: "resume", id: acceptingFramesFromId });
     }
   }
 
-  updateCanvasSize();
   startRenderLoop();
   triggerWorkerGeneration("init");
 
@@ -244,11 +281,18 @@
     lastWidth = w;
     lastHeight = h;
 
-    updateCanvasSize();
+    // Don't update canvas size here - it clears the canvas and disrupts fade-out.
+    // Canvas size will be updated in triggerWorkerGeneration instead.
 
     currentRequestId++;
     clearTimeout(pendingTimeout);
     clearTimeout(autoRegenTimeout);
+
+    // Reset first frame flag immediately on resize
+    hasReceivedFirstFrame = false;
+
+    // Mark that we're in a transition period
+    isTransitioning = true;
 
     if (isFirstLoad) {
       pendingTimeout = setTimeout(() => {
@@ -256,9 +300,14 @@
       }, 100);
     } else {
       htmlCanvas.classList.remove("loaded");
+
+      // Wait for both the debounce period and the fade-out to complete.
+      // Use whichever is longer to ensure the canvas is fully faded out
+      // before starting the new generation.
+      const delay = Math.max(RESIZE_DEBOUNCE_TIME, FADE_OUT_DURATION);
       pendingTimeout = setTimeout(() => {
         triggerWorkerGeneration("resize");
-      }, RESIZE_DEBOUNCE_TIME);
+      }, delay);
     }
   });
   observer.observe(container);
@@ -280,6 +329,12 @@
       currentRequestId++;
       clearTimeout(pendingTimeout);
       clearTimeout(autoRegenTimeout);
+
+      // Reset first frame flag on theme change
+      hasReceivedFirstFrame = false;
+
+      // Mark that we're in a transition period
+      isTransitioning = true;
 
       if (!isFirstLoad) {
         htmlCanvas.classList.remove("loaded");
