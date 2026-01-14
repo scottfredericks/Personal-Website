@@ -1,8 +1,12 @@
 # Scott Fredericks Personal Website
 
-This is a personal static website generated using [Lume](https://lume.land/).
+This is a personal static website built using [Lume](https://lume.land/) and hosted using [GitHub Pages](https://docs.github.com/en/pages).
 
-Blog articles on the live website give more information about its creation.
+See the live site at [https://scottfredericks.com/](https://scottfredericks.com/).
+
+Blog articles on the live website give more information about the development process.
+
+- [Building a Personal Website - Part 1: Using Lume](https://scottfredericks.com/blog/personal-website-part-1/)
 
 ## Prerequisites
 
@@ -68,7 +72,11 @@ This updates the site in the browser automatically on file change.
 
 ### Public Deployment
 
-TODO
+Hosting is provided through GitHub Pages. Deployment is handled by GitHub actions.
+
+The `.github/workflows/deploy.yml` file defines an action to be run when merging into the `master` branch. This builds to a temporary `_site` folder using `deno task build`, then uploads the folder to host on GitHub Pages.
+
+See [https://lume.land/docs/advanced/deployment/](https://lume.land/docs/advanced/deployment/) for details on alternative deployment methods.
 
 ## Licenses
 
