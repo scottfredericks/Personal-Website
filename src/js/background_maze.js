@@ -1,5 +1,7 @@
 // deno-lint-ignore-file no-window-prefix no-window
 
+// Animated maze background generator
+//
 // Creates a continuously generating maze pattern that tiles seamlessly across the viewport.
 // Crawlers traverse a grid, drawing strokes that accumulate on a pattern canvas. The pattern
 // is then tiled across the display canvas with glow effects rendered at crawler head positions.
@@ -109,6 +111,14 @@
       }
     }
   };
+
+  // Updates canvas pixel dimensions to match container size, preventing CSS scaling
+  function syncCanvasSize() {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (display.width !== w) display.width = w;
+    if (display.height !== h) display.height = h;
+  }
 
   // Updates palette and regenerates glow sprites for the current theme
   function applyTheme() {
@@ -406,6 +416,8 @@
 
   // Composites the tiled pattern and glow effects onto the display canvas
   function render() {
+    syncCanvasSize();
+
     dCtx.fillStyle = palette.bg;
     dCtx.fillRect(0, 0, display.width, display.height);
     forTiles((x, y) => dCtx.drawImage(pattern, x, y));
@@ -472,8 +484,7 @@
   function start() {
     if (shutdown) return;
     applyTheme();
-    display.width = container.clientWidth;
-    display.height = container.clientHeight;
+    syncCanvasSize();
     init();
     frameId ||= requestAnimationFrame(loop);
   }
@@ -560,6 +571,7 @@
     if (w !== lastW || h !== lastH) {
       lastW = w;
       lastH = h;
+      syncCanvasSize();
       trigger();
     }
   });
