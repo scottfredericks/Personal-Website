@@ -66,6 +66,9 @@
   });
   const pCtx = pattern.getContext("2d");
 
+  // Reference to main content element for height calculation
+  const main = document.querySelector("main");
+
   // Visual and generation state
   let state = "hidden"; // Visual state: hidden, fading-in, visible, fading-out
   let running = false; // Whether crawlers are actively generating
@@ -124,21 +127,32 @@
     }
   };
 
-  // Calculates required canvas dimensions to cover the full document
+  // Calculates required canvas dimensions to cover the full document content.
+  // Uses a hidden measurement element to avoid feedback loops where the
+  // container's own height influences the document height calculation.
   function getRequiredDimensions() {
     const width = container.clientWidth;
-    // Use the maximum of viewport height and document scroll height
-    const docHeight = Math.max(
+    const navbarHeight = container.offsetTop;
+    const viewportContentHeight = window.innerHeight - navbarHeight;
+
+    // Temporarily collapse container to measure true content height
+    const prevHeight = container.style.height;
+    container.style.height = "0px";
+
+    // Measure the actual document content height without our container's contribution
+    const docScrollHeight = Math.max(
       document.body.scrollHeight,
       document.documentElement.scrollHeight,
-      window.innerHeight,
     );
-    // Subtract navbar height approximation (container starts below navbar)
-    const navbarHeight = container.offsetTop;
-    const height = Math.max(
-      docHeight - navbarHeight,
-      window.innerHeight - navbarHeight,
-    );
+
+    // Restore container height
+    container.style.height = prevHeight;
+
+    // Calculate height needed: document content height minus navbar,
+    // but at minimum the viewport height minus navbar
+    const contentHeight = docScrollHeight - navbarHeight;
+    const height = Math.max(viewportContentHeight, contentHeight);
+
     return { width, height };
   }
 
@@ -154,7 +168,7 @@
       display.height = canvasHeight;
       changed = true;
     }
-    // Also update container height to match canvas
+    // Update container height to match canvas
     if (changed) {
       container.style.height = canvasHeight + "px";
     }
@@ -648,7 +662,7 @@
       frameId = null;
     }
     resizeObs.disconnect();
-    bodyResizeObs.disconnect();
+    mainResizeObs.disconnect();
     themeObs.disconnect();
   }
 
@@ -687,7 +701,7 @@
     }
   }
 
-  // Debounced dimension check for body size changes
+  // Debounced dimension check for content size changes
   function debouncedDimensionCheck() {
     clearTimeout(timeouts.resize);
     timeouts.resize = setTimeout(checkDimensions, 100);
@@ -705,8 +719,8 @@
     }
   });
 
-  // Observe body for height changes (content changes affecting scroll height)
-  const bodyResizeObs = new ResizeObserver(() => {
+  // Observe main content for height changes (content changes affecting scroll height)
+  const mainResizeObs = new ResizeObserver(() => {
     if (shutdown) return;
     debouncedDimensionCheck();
   });
@@ -718,7 +732,9 @@
 
   // Initialize observers
   resizeObs.observe(container);
-  bodyResizeObs.observe(document.body);
+  if (main) {
+    mainResizeObs.observe(main);
+  }
   themeObs.observe(document.documentElement, { attributes: true });
 
   // Handle page visibility changes for tab switching
@@ -752,7 +768,9 @@
 
       // Reconnect observers in case they were disconnected
       resizeObs.observe(container);
-      bodyResizeObs.observe(document.body);
+      if (main) {
+        mainResizeObs.observe(main);
+      }
       themeObs.observe(document.documentElement, { attributes: true });
 
       // Get fresh dimensions and restart
