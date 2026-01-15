@@ -40,57 +40,107 @@
     SE: { x: 1, y: 1 },
   };
 
-  // ===========================================================================
-  // SVG namespace and element references
-  // ===========================================================================
-
   const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // ===========================================================================
+  // DOM references and state
+  // ===========================================================================
 
   const container = document.getElementById("background-maze-div");
   const svg = document.getElementById("background-maze-svg");
 
-  // These elements are created once and reused across regenerations
-  let defsElement = null;
   let patternElement = null;
   let patternBackground = null;
-  let pathGroup = null;
   let pathElements = [];
   let glowLayer = null;
-  let fillRect = null;
   let glowGradients = [];
 
-  // ===========================================================================
-  // State management
-  // ===========================================================================
-
-  // Visual state machine
   let visualState = "hidden";
-  let transitionTimeout = null;
-
-  // Generation state
   let isRunning = false;
   let isPaused = false;
   let isShuttingDown = false;
   let hasRenderedFirstFrame = false;
 
-  // Debounce and scheduling
   let debounceTimeout = null;
   let autoRegenTimeout = null;
+  let transitionTimeout = null;
   let animationFrameId = null;
 
-  // Theme tracking
   let currentPalette = PALETTE_DARK;
   let currentBackground = BACKGROUND_DARK;
 
-  // Crawler and grid state
   let grid = [];
   let degrees = [];
   let colorMap = [];
   let crawlers = [];
   let totalSeedSlots = 0;
-
-  // Path accumulation buffers, one string per color, flushed each frame
   let pathBuffers = [];
+
+  let lastWidth = 0;
+  let lastHeight = 0;
+
+  // ===========================================================================
+  // Utility functions
+  // ===========================================================================
+
+  function createSvgElement(tag, attrs = {}) {
+    const el = document.createElementNS(SVG_NS, tag);
+    for (const [key, value] of Object.entries(attrs)) {
+      el.setAttribute(key, value);
+    }
+    return el;
+  }
+
+  function create2dArray(size, fillValue = false) {
+    return Array.from({ length: size }, () => Array(size).fill(fillValue));
+  }
+
+  // Calls a function for the primary position and any wrapped positions near pattern edges
+  function forEachWrappedPosition(x, y, buffer, callback) {
+    const w = PATTERN_PIXEL_SIZE;
+    callback(x, y);
+
+    const wrappedX = x > w - buffer ? -w : x < buffer ? w : 0;
+    const wrappedY = y > w - buffer ? -w : y < buffer ? w : 0;
+
+    if (wrappedX !== 0) callback(x + wrappedX, y);
+    if (wrappedY !== 0) callback(x, y + wrappedY);
+    if (wrappedX !== 0 && wrappedY !== 0) callback(x + wrappedX, y + wrappedY);
+  }
+
+  // Check if a diagonal move would cross an existing wall
+  function isDiagonalBlocked(x, y, vec) {
+    const cols = PATTERN_GRID_SIZE;
+    const rows = PATTERN_GRID_SIZE;
+    const n1x = (x + vec.x + cols) % cols;
+    const n2y = (y + vec.y + rows) % rows;
+    return grid[n1x][y] && grid[x][n2y];
+  }
+
+  function getValidMoves(x, y) {
+    const validMoves = [];
+    const cols = PATTERN_GRID_SIZE;
+    const rows = PATTERN_GRID_SIZE;
+
+    for (const [key, vec] of Object.entries(DIRS)) {
+      const tx = (x + vec.x + cols) % cols;
+      const ty = (y + vec.y + rows) % rows;
+
+      if (grid[tx][ty]) continue;
+
+      const isDiagonal = Math.abs(vec.x) === 1 && Math.abs(vec.y) === 1;
+      if (!isDiagonal || !isDiagonalBlocked(x, y, vec)) {
+        validMoves.push(key);
+      }
+    }
+    return validMoves;
+  }
+
+  function clearAllTimeouts() {
+    clearTimeout(debounceTimeout);
+    clearTimeout(autoRegenTimeout);
+    clearTimeout(transitionTimeout);
+  }
 
   // ===========================================================================
   // SVG structure initialization
@@ -99,115 +149,98 @@
   function initializeSvgStructure() {
     svg.innerHTML = "";
 
-    defsElement = document.createElementNS(SVG_NS, "defs");
+    const defsElement = createSvgElement("defs");
     svg.appendChild(defsElement);
 
-    // Create glow gradients, one per palette color
-    glowGradients = [];
-    for (let i = 0; i < currentPalette.length; i++) {
-      const gradient = document.createElementNS(SVG_NS, "radialGradient");
-      gradient.setAttribute("id", `maze-glow-gradient-${i}`);
-      updateGlowGradient(gradient, currentPalette[i]);
+    glowGradients = currentPalette.map((color, i) => {
+      const gradient = createSvgElement("radialGradient", {
+        id: `maze-glow-gradient-${i}`,
+      });
+      updateGlowGradient(gradient, color);
       defsElement.appendChild(gradient);
-      glowGradients.push(gradient);
-    }
+      return gradient;
+    });
 
-    // Create pattern element for tiling
-    patternElement = document.createElementNS(SVG_NS, "pattern");
-    patternElement.setAttribute("id", "maze-pattern");
-    patternElement.setAttribute("patternUnits", "userSpaceOnUse");
-    patternElement.setAttribute("width", PATTERN_PIXEL_SIZE);
-    patternElement.setAttribute("height", PATTERN_PIXEL_SIZE);
+    patternElement = createSvgElement("pattern", {
+      id: "maze-pattern",
+      patternUnits: "userSpaceOnUse",
+      width: PATTERN_PIXEL_SIZE,
+      height: PATTERN_PIXEL_SIZE,
+    });
     defsElement.appendChild(patternElement);
 
-    // Background rectangle inside pattern
-    patternBackground = document.createElementNS(SVG_NS, "rect");
-    patternBackground.setAttribute("width", "100%");
-    patternBackground.setAttribute("height", "100%");
-    patternBackground.setAttribute("fill", currentBackground);
+    patternBackground = createSvgElement("rect", {
+      width: "100%",
+      height: "100%",
+      fill: currentBackground,
+    });
     patternElement.appendChild(patternBackground);
 
-    // Group for all maze paths
-    pathGroup = document.createElementNS(SVG_NS, "g");
-    pathGroup.setAttribute("id", "maze-paths");
+    const pathGroup = createSvgElement("g", { id: "maze-paths" });
     patternElement.appendChild(pathGroup);
 
-    // Create one path element per color
-    pathElements = [];
-    for (let i = 0; i < currentPalette.length; i++) {
-      const path = document.createElementNS(SVG_NS, "path");
-      path.setAttribute("id", `maze-path-${i}`);
-      path.setAttribute("stroke", currentPalette[i]);
-      path.setAttribute("stroke-width", CONFIG.strokeWidth);
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("fill", "none");
-      path.setAttribute("d", "");
+    pathElements = currentPalette.map((color, i) => {
+      const path = createSvgElement("path", {
+        id: `maze-path-${i}`,
+        stroke: color,
+        "stroke-width": CONFIG.strokeWidth,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        fill: "none",
+        d: "",
+      });
       pathGroup.appendChild(path);
-      pathElements.push(path);
-    }
+      return path;
+    });
 
-    // Glow layer inside pattern, rendered on top of paths
-    glowLayer = document.createElementNS(SVG_NS, "g");
-    glowLayer.setAttribute("id", "maze-glow-layer");
+    glowLayer = createSvgElement("g", { id: "maze-glow-layer" });
     patternElement.appendChild(glowLayer);
 
-    // Full viewport rectangle that uses the pattern
-    fillRect = document.createElementNS(SVG_NS, "rect");
-    fillRect.setAttribute("id", "maze-fill");
-    fillRect.setAttribute("width", "100%");
-    fillRect.setAttribute("height", "100%");
-    fillRect.setAttribute("fill", "url(#maze-pattern)");
-    svg.appendChild(fillRect);
+    svg.appendChild(
+      createSvgElement("rect", {
+        id: "maze-fill",
+        width: "100%",
+        height: "100%",
+        fill: "url(#maze-pattern)",
+      }),
+    );
   }
 
   function updateGlowGradient(gradient, color) {
     gradient.innerHTML = "";
-
-    const stop1 = document.createElementNS(SVG_NS, "stop");
-    stop1.setAttribute("offset", "0%");
-    stop1.setAttribute("stop-color", color);
-    stop1.setAttribute("stop-opacity", "0.8");
-    gradient.appendChild(stop1);
-
-    const stop2 = document.createElementNS(SVG_NS, "stop");
-    stop2.setAttribute("offset", "100%");
-    stop2.setAttribute("stop-color", color);
-    stop2.setAttribute("stop-opacity", "0");
-    gradient.appendChild(stop2);
+    gradient.appendChild(
+      createSvgElement("stop", {
+        offset: "0%",
+        "stop-color": color,
+        "stop-opacity": "0.8",
+      }),
+    );
+    gradient.appendChild(
+      createSvgElement("stop", {
+        offset: "100%",
+        "stop-color": color,
+        "stop-opacity": "0",
+      }),
+    );
   }
 
   // ===========================================================================
   // Theme handling
   // ===========================================================================
 
-  function getTheme() {
-    const val = document.documentElement.getAttribute("data-theme");
-    return val === "light" ? "light" : "dark";
-  }
-
   function applyTheme() {
-    const theme = getTheme();
-    if (theme === "light") {
-      currentPalette = PALETTE_LIGHT;
-      currentBackground = BACKGROUND_LIGHT;
-    } else {
-      currentPalette = PALETTE_DARK;
-      currentBackground = BACKGROUND_DARK;
-    }
+    const isLight =
+      document.documentElement.getAttribute("data-theme") === "light";
+    currentPalette = isLight ? PALETTE_LIGHT : PALETTE_DARK;
+    currentBackground = isLight ? BACKGROUND_LIGHT : BACKGROUND_DARK;
 
-    // Update existing SVG elements if they exist
     if (patternBackground) {
       patternBackground.setAttribute("fill", currentBackground);
     }
-
-    for (let i = 0; i < pathElements.length; i++) {
-      pathElements[i].setAttribute("stroke", currentPalette[i]);
-    }
-
-    for (let i = 0; i < glowGradients.length; i++) {
-      updateGlowGradient(glowGradients[i], currentPalette[i]);
-    }
+    pathElements.forEach((el, i) =>
+      el.setAttribute("stroke", currentPalette[i])
+    );
+    glowGradients.forEach((g, i) => updateGlowGradient(g, currentPalette[i]));
   }
 
   // ===========================================================================
@@ -215,44 +248,19 @@
   // ===========================================================================
 
   function setVisualState(newState) {
-    if (isShuttingDown) return;
-    if (visualState === newState) return;
+    if (isShuttingDown || visualState === newState) return;
 
     clearTimeout(transitionTimeout);
     visualState = newState;
 
-    switch (newState) {
-      case "fading-out":
-        svg.classList.remove("loaded");
-        transitionTimeout = setTimeout(() => {
-          setVisualState("hidden");
-        }, FADE_DURATION);
-        break;
-
-      case "hidden":
-        break;
-
-      case "fading-in":
-        svg.classList.add("loaded");
-        transitionTimeout = setTimeout(() => {
-          setVisualState("visible");
-        }, FADE_DURATION);
-        break;
-
-      case "visible":
-        break;
+    if (newState === "fading-out" || newState === "fading-in") {
+      svg.classList.toggle("loaded", newState === "fading-in");
+      const nextState = newState === "fading-in" ? "visible" : "hidden";
+      transitionTimeout = setTimeout(
+        () => setVisualState(nextState),
+        FADE_DURATION,
+      );
     }
-  }
-
-  // ===========================================================================
-  // Scroll handling
-  // ===========================================================================
-
-  function updatePatternScroll() {
-    if (!patternElement) return;
-    const scrollY = window.scrollY;
-    const offset = -(scrollY % PATTERN_PIXEL_SIZE);
-    patternElement.setAttribute("patternTransform", `translate(0, ${offset})`);
   }
 
   // ===========================================================================
@@ -263,16 +271,17 @@
     constructor(x, y, dir, forceLen, colorIdx) {
       this.x = x;
       this.y = y;
-      if (grid[x] && grid[x][y] !== undefined) {
-        grid[x][y] = true;
-        colorMap[x][y] = colorIdx;
-      }
       this.dir = dir;
       this.forceLen = forceLen;
       this.colorIdx = colorIdx;
       this.stepCount = 0;
       this.currentSegLen = 0;
       this.state = "THINKING";
+
+      if (grid[x]?.[y] !== undefined) {
+        grid[x][y] = true;
+        colorMap[x][y] = colorIdx;
+      }
 
       const gs = CONFIG.gridSize;
       this.animX = x * gs + gs / 2;
@@ -282,72 +291,16 @@
     }
 
     update() {
-      if (this.state === "THINKING") {
-        return this.think();
-      }
-      if (this.state === "MOVING") {
-        return this.move();
-      }
-      return false;
+      return this.state === "THINKING" ? this.think() : this.move();
     }
 
     think() {
-      const validMoves = [];
-      const cols = PATTERN_GRID_SIZE;
-      const rows = PATTERN_GRID_SIZE;
-
-      for (const [key, vec] of Object.entries(DIRS)) {
-        const tx = (this.x + vec.x + cols) % cols;
-        const ty = (this.y + vec.y + rows) % rows;
-
-        if (!grid[tx][ty]) {
-          // Prevent diagonal moves from crossing existing walls
-          if (Math.abs(vec.x) === 1 && Math.abs(vec.y) === 1) {
-            const n1x = (this.x + vec.x + cols) % cols;
-            const n1y = this.y;
-            const n2x = this.x;
-            const n2y = (this.y + vec.y + rows) % rows;
-
-            if (!grid[n1x][n1y] || !grid[n2x][n2y]) {
-              validMoves.push(key);
-            }
-          } else {
-            validMoves.push(key);
-          }
-        }
-      }
-
+      const validMoves = getValidMoves(this.x, this.y);
       if (validMoves.length === 0) return false;
 
-      let nextDir = null;
-      const canContinue = validMoves.includes(this.dir);
-
-      if (this.forceLen > 0) {
-        if (canContinue) nextDir = this.dir;
-        else if (validMoves.length > 0) nextDir = this.pickBestTurn(validMoves);
-        else return false;
-      } else if (this.currentSegLen > CONFIG.maxSegmentLength) {
-        const turns = validMoves.filter((d) => d !== this.dir);
-        if (turns.length > 0) nextDir = this.pickBestTurn(turns);
-        else if (canContinue) {
-          nextDir = this.dir;
-          this.currentSegLen = 0;
-        } else {
-          nextDir = this.pickBestTurn(validMoves);
-        }
-      } else if (this.currentSegLen < CONFIG.minSegmentLength && canContinue) {
-        nextDir = this.dir;
-      } else {
-        if (Math.random() < CONFIG.turnProbability && validMoves.length > 1) {
-          nextDir = this.pickBestTurn(validMoves);
-        } else if (canContinue) {
-          nextDir = this.dir;
-        } else {
-          nextDir = this.pickBestTurn(validMoves);
-        }
-      }
-
+      const nextDir = this.chooseDirection(validMoves);
       this.stepCount++;
+
       let nextColorIdx = this.colorIdx;
       if (this.stepCount > CONFIG.colorChangeRate) {
         this.stepCount = 0;
@@ -355,6 +308,8 @@
       }
 
       const vec = DIRS[nextDir];
+      const cols = PATTERN_GRID_SIZE;
+      const rows = PATTERN_GRID_SIZE;
       const nx = (this.x + vec.x + cols) % cols;
       const ny = (this.y + vec.y + rows) % rows;
 
@@ -363,25 +318,9 @@
       degrees[nx][ny]++;
       colorMap[nx][ny] = nextColorIdx;
 
-      // Branching logic
-      if (this.forceLen <= 0 && crawlers.length < totalSeedSlots) {
-        if (Math.random() < CONFIG.chanceToBranch) {
-          const branchOpts = validMoves.filter((d) => d !== nextDir);
-          if (branchOpts.length > 0 && degrees[this.x][this.y] < 3) {
-            const bDir = this.pickBestTurn(branchOpts);
-            degrees[this.x][this.y]++;
-            crawlers.push(
-              new Crawler(this.x, this.y, bDir, 0, this.colorIdx),
-            );
-          }
-        }
-      }
+      this.tryBranch(validMoves, nextDir);
 
-      if (nextDir !== this.dir) {
-        this.currentSegLen = 0;
-      } else {
-        this.currentSegLen++;
-      }
+      this.currentSegLen = nextDir !== this.dir ? 0 : this.currentSegLen + 1;
       if (this.forceLen > 0) this.forceLen--;
 
       const gs = CONFIG.gridSize;
@@ -395,14 +334,60 @@
       return true;
     }
 
+    chooseDirection(validMoves) {
+      const canContinue = validMoves.includes(this.dir);
+
+      if (this.forceLen > 0) {
+        return canContinue ? this.dir : this.pickBestTurn(validMoves);
+      }
+
+      if (this.currentSegLen > CONFIG.maxSegmentLength) {
+        const turns = validMoves.filter((d) => d !== this.dir);
+        if (turns.length > 0) return this.pickBestTurn(turns);
+        if (canContinue) {
+          this.currentSegLen = 0;
+          return this.dir;
+        }
+        return this.pickBestTurn(validMoves);
+      }
+
+      if (this.currentSegLen < CONFIG.minSegmentLength && canContinue) {
+        return this.dir;
+      }
+
+      if (Math.random() < CONFIG.turnProbability && validMoves.length > 1) {
+        return this.pickBestTurn(validMoves);
+      }
+
+      return canContinue ? this.dir : this.pickBestTurn(validMoves);
+    }
+
+    tryBranch(validMoves, nextDir) {
+      if (this.forceLen > 0 || crawlers.length >= totalSeedSlots) return;
+      if (Math.random() >= CONFIG.chanceToBranch) return;
+
+      const branchOpts = validMoves.filter((d) => d !== nextDir);
+      if (branchOpts.length > 0 && degrees[this.x][this.y] < 3) {
+        degrees[this.x][this.y]++;
+        crawlers.push(
+          new Crawler(
+            this.x,
+            this.y,
+            this.pickBestTurn(branchOpts),
+            0,
+            this.colorIdx,
+          ),
+        );
+      }
+    }
+
     move() {
       const dx = this.targetX - this.animX;
       const dy = this.targetY - this.animY;
       const distSq = dx * dx + dy * dy;
       const speedSq = CONFIG.growthSpeed * CONFIG.growthSpeed;
 
-      let nextX, nextY;
-      let reached = false;
+      let nextX, nextY, reached;
 
       if (distSq <= speedSq) {
         nextX = this.targetX;
@@ -412,11 +397,10 @@
         const angle = Math.atan2(dy, dx);
         nextX = this.animX + Math.cos(angle) * CONFIG.growthSpeed;
         nextY = this.animY + Math.sin(angle) * CONFIG.growthSpeed;
+        reached = false;
       }
 
-      // Accumulate path segment into buffer for batch DOM update
       this.accumulatePathSegment(this.animX, this.animY, nextX, nextY);
-
       this.animX = nextX;
       this.animY = nextY;
 
@@ -432,53 +416,36 @@
     }
 
     accumulatePathSegment(x1, y1, x2, y2) {
-      // Add line segment to the appropriate color buffer.
-      // We use absolute coordinates with M (move) and L (line) commands.
-      // The browser will batch-render all segments when we update the path element.
-      const w = PATTERN_PIXEL_SIZE;
       const buffer = CONFIG.strokeWidth * 2;
+      const addSegment = (ax, ay, bx, by) => {
+        pathBuffers[this.colorIdx] += `M${ax.toFixed(1)},${ay.toFixed(1)}L${
+          bx.toFixed(1)
+        },${by.toFixed(1)}`;
+      };
 
-      const segment = `M${x1.toFixed(1)},${y1.toFixed(1)}L${x2.toFixed(1)},${
-        y2.toFixed(1)
-      }`;
-      pathBuffers[this.colorIdx] += segment;
+      const w = PATTERN_PIXEL_SIZE;
+      const wrappedX = Math.max(x1, x2) > w - buffer
+        ? -w
+        : Math.min(x1, x2) < buffer
+        ? w
+        : 0;
+      const wrappedY = Math.max(y1, y2) > w - buffer
+        ? -w
+        : Math.min(y1, y2) < buffer
+        ? w
+        : 0;
 
-      // Handle wrap-around by drawing duplicate segments at pattern edges
-      let wrappedX = 0;
-      let wrappedY = 0;
-
-      if (Math.max(x1, x2) > w - buffer) wrappedX = -w;
-      else if (Math.min(x1, x2) < buffer) wrappedX = w;
-
-      if (Math.max(y1, y2) > w - buffer) wrappedY = -w;
-      else if (Math.min(y1, y2) < buffer) wrappedY = w;
-
-      if (wrappedX !== 0) {
-        const seg = `M${(x1 + wrappedX).toFixed(1)},${y1.toFixed(1)}L${
-          (x2 + wrappedX).toFixed(1)
-        },${y2.toFixed(1)}`;
-        pathBuffers[this.colorIdx] += seg;
-      }
-
-      if (wrappedY !== 0) {
-        const seg = `M${x1.toFixed(1)},${(y1 + wrappedY).toFixed(1)}L${
-          x2.toFixed(1)
-        },${(y2 + wrappedY).toFixed(1)}`;
-        pathBuffers[this.colorIdx] += seg;
-      }
-
+      addSegment(x1, y1, x2, y2);
+      if (wrappedX !== 0) addSegment(x1 + wrappedX, y1, x2 + wrappedX, y2);
+      if (wrappedY !== 0) addSegment(x1, y1 + wrappedY, x2, y2 + wrappedY);
       if (wrappedX !== 0 && wrappedY !== 0) {
-        const seg = `M${(x1 + wrappedX).toFixed(1)},${
-          (y1 + wrappedY).toFixed(1)
-        }L${(x2 + wrappedX).toFixed(1)},${(y2 + wrappedY).toFixed(1)}`;
-        pathBuffers[this.colorIdx] += seg;
+        addSegment(x1 + wrappedX, y1 + wrappedY, x2 + wrappedX, y2 + wrappedY);
       }
     }
 
     pickBestTurn(options) {
       const scored = options.map((opt) => {
-        let score = 0;
-        if (this.isAngle45(this.dir, opt)) score += 10;
+        let score = this.isAngle45(this.dir, opt) ? 10 : 0;
 
         const v = DIRS[opt];
         const cols = PATTERN_GRID_SIZE;
@@ -490,8 +457,7 @@
         for (const n of Object.values(DIRS)) {
           const nx = (tx + n.x + cols) % cols;
           const ny = (ty + n.y + rows) % rows;
-          if (nx === this.x && ny === this.y) continue;
-          if (grid[nx][ny]) neighbors++;
+          if (!(nx === this.x && ny === this.y) && grid[nx][ny]) neighbors++;
         }
         if (neighbors === 1) score += 5;
 
@@ -500,10 +466,9 @@
 
       scored.sort((a, b) => b.score - a.score);
 
-      if (scored.length > 1 && Math.random() < 0.2) {
-        return scored[Math.floor(Math.random() * scored.length)].opt;
-      }
-      return scored[0].opt;
+      return scored.length > 1 && Math.random() < 0.2
+        ? scored[Math.floor(Math.random() * scored.length)].opt
+        : scored[0].opt;
     }
 
     isAngle45(d1, d2) {
@@ -517,171 +482,112 @@
   }
 
   // ===========================================================================
-  // Gap filling for continuous generation
+  // Gap filling
   // ===========================================================================
 
   function findAndSpawnFill() {
-    // Identify cells currently being moved into to avoid visual disconnects
-    const lockedCells = new Set();
-    for (const c of crawlers) {
-      if (c.state === "MOVING") {
-        lockedCells.add(`${c.x},${c.y}`);
-      }
-    }
+    const lockedCells = new Set(
+      crawlers
+        .filter((c) => c.state === "MOVING")
+        .map((c) => `${c.x},${c.y}`),
+    );
 
     const candidates = [];
     const weakCandidates = [];
-    const step = 2;
-    const scanHeight = 50;
     const size = PATTERN_GRID_SIZE;
     const startRow = Math.floor(Math.random() * size);
 
-    for (let x = 0; x < size; x += step) {
-      for (let i = 0; i < scanHeight; i++) {
+    for (let x = 0; x < size; x += 2) {
+      for (let i = 0; i < 50; i++) {
         const y = (startRow + i) % size;
 
-        if (!grid[x][y]) continue;
-        if (lockedCells.has(`${x},${y}`)) continue;
-        if (degrees[x][y] >= 3) continue;
-
-        const validDirs = [];
-        for (const [k, v] of Object.entries(DIRS)) {
-          const tx = (x + v.x + size) % size;
-          const ty = (y + v.y + size) % size;
-
-          if (!grid[tx][ty]) {
-            if (Math.abs(v.x) === 1 && Math.abs(v.y) === 1) {
-              const n1x = (x + v.x + size) % size;
-              const n1y = y;
-              const n2x = x;
-              const n2y = (y + v.y + size) % size;
-              if (!grid[n1x][n1y] || !grid[n2x][n2y]) {
-                validDirs.push(k);
-              }
-            } else {
-              validDirs.push(k);
-            }
-          }
+        if (!grid[x][y] || lockedCells.has(`${x},${y}`) || degrees[x][y] >= 3) {
+          continue;
         }
 
-        if (validDirs.length > 0) {
-          const strongDirs = [];
-          for (const dir of validDirs) {
-            const v = DIRS[dir];
-            const tx = (x + v.x + size) % size;
-            const ty = (y + v.y + size) % size;
-            const ttx = (tx + v.x + size) % size;
-            const tty = (ty + v.y + size) % size;
-            if (!grid[ttx][tty]) strongDirs.push(dir);
-          }
+        const validDirs = getValidMoves(x, y);
+        if (validDirs.length === 0) continue;
 
-          if (strongDirs.length > 0) {
-            candidates.push({ x, y, dirs: strongDirs });
-          } else {
-            weakCandidates.push({ x, y, dirs: validDirs });
-          }
+        const strongDirs = validDirs.filter((dir) => {
+          const v = DIRS[dir];
+          const tx = (x + v.x + size) % size;
+          const ty = (y + v.y + size) % size;
+          const ttx = (tx + v.x + size) % size;
+          const tty = (ty + v.y + size) % size;
+          return !grid[ttx][tty];
+        });
+
+        if (strongDirs.length > 0) {
+          candidates.push({ x, y, dirs: strongDirs });
+        } else {
+          weakCandidates.push({ x, y, dirs: validDirs });
         }
       }
     }
 
-    let choice = null;
-    let chosenDir = null;
+    const pool = candidates.length > 0 ? candidates : weakCandidates;
+    if (pool.length === 0) return false;
 
-    if (candidates.length > 0) {
-      choice = candidates[Math.floor(Math.random() * candidates.length)];
-      chosenDir = choice.dirs[Math.floor(Math.random() * choice.dirs.length)];
-    } else if (weakCandidates.length > 0) {
-      choice =
-        weakCandidates[Math.floor(Math.random() * weakCandidates.length)];
-      chosenDir = choice.dirs[Math.floor(Math.random() * choice.dirs.length)];
-    }
+    const choice = pool[Math.floor(Math.random() * pool.length)];
+    const chosenDir =
+      choice.dirs[Math.floor(Math.random() * choice.dirs.length)];
 
-    if (choice) {
-      degrees[choice.x][choice.y]++;
-      const parentColor = colorMap[choice.x][choice.y];
-      const c = new Crawler(choice.x, choice.y, chosenDir, 4, parentColor);
-      crawlers.push(c);
-      return true;
-    }
-
-    return false;
+    degrees[choice.x][choice.y]++;
+    crawlers.push(
+      new Crawler(
+        choice.x,
+        choice.y,
+        chosenDir,
+        4,
+        colorMap[choice.x][choice.y],
+      ),
+    );
+    return true;
   }
 
   // ===========================================================================
-  // Glow effect rendering
+  // Rendering
   // ===========================================================================
 
   function updateGlowEffects() {
     glowLayer.innerHTML = "";
-
     if (crawlers.length === 0) return;
 
-    const w = PATTERN_PIXEL_SIZE;
-    const buffer = GLOW_RADIUS;
-
     for (const crawler of crawlers) {
-      // Create primary glow circle at crawler position
-      const circle = document.createElementNS(SVG_NS, "circle");
-      circle.setAttribute("cx", crawler.animX);
-      circle.setAttribute("cy", crawler.animY);
-      circle.setAttribute("r", GLOW_RADIUS);
-      circle.setAttribute(
-        "fill",
-        `url(#maze-glow-gradient-${crawler.colorIdx})`,
+      forEachWrappedPosition(
+        crawler.animX,
+        crawler.animY,
+        GLOW_RADIUS,
+        (cx, cy) => {
+          glowLayer.appendChild(
+            createSvgElement("circle", {
+              cx,
+              cy,
+              r: GLOW_RADIUS,
+              fill: `url(#maze-glow-gradient-${crawler.colorIdx})`,
+            }),
+          );
+        },
       );
-      glowLayer.appendChild(circle);
-
-      // Handle wrap-around by creating duplicate glow circles at pattern edges
-      let wrappedX = 0;
-      let wrappedY = 0;
-
-      if (crawler.animX > w - buffer) wrappedX = -w;
-      else if (crawler.animX < buffer) wrappedX = w;
-
-      if (crawler.animY > w - buffer) wrappedY = -w;
-      else if (crawler.animY < buffer) wrappedY = w;
-
-      if (wrappedX !== 0) {
-        const c = document.createElementNS(SVG_NS, "circle");
-        c.setAttribute("cx", crawler.animX + wrappedX);
-        c.setAttribute("cy", crawler.animY);
-        c.setAttribute("r", GLOW_RADIUS);
-        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
-        glowLayer.appendChild(c);
-      }
-
-      if (wrappedY !== 0) {
-        const c = document.createElementNS(SVG_NS, "circle");
-        c.setAttribute("cx", crawler.animX);
-        c.setAttribute("cy", crawler.animY + wrappedY);
-        c.setAttribute("r", GLOW_RADIUS);
-        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
-        glowLayer.appendChild(c);
-      }
-
-      if (wrappedX !== 0 && wrappedY !== 0) {
-        const c = document.createElementNS(SVG_NS, "circle");
-        c.setAttribute("cx", crawler.animX + wrappedX);
-        c.setAttribute("cy", crawler.animY + wrappedY);
-        c.setAttribute("r", GLOW_RADIUS);
-        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
-        glowLayer.appendChild(c);
-      }
     }
   }
-
-  // ===========================================================================
-  // Path buffer flushing
-  // ===========================================================================
 
   function flushPathBuffers() {
     for (let i = 0; i < pathBuffers.length; i++) {
       if (pathBuffers[i].length > 0) {
-        const currentD = pathElements[i].getAttribute("d") || "";
-        pathElements[i].setAttribute("d", currentD + pathBuffers[i]);
+        pathElements[i].setAttribute(
+          "d",
+          (pathElements[i].getAttribute("d") || "") + pathBuffers[i],
+        );
         pathBuffers[i] = "";
       }
     }
+  }
+
+  function updatePatternScroll() {
+    if (!patternElement) return;
+    const offset = -(window.scrollY % PATTERN_PIXEL_SIZE);
+    patternElement.setAttribute("patternTransform", `translate(0, ${offset})`);
   }
 
   // ===========================================================================
@@ -691,33 +597,24 @@
   function initializeGeneration() {
     const size = PATTERN_GRID_SIZE;
 
-    // Reset grid state
-    grid = new Array(size).fill(0).map(() => new Array(size).fill(false));
-    degrees = new Array(size).fill(0).map(() => new Array(size).fill(0));
-    colorMap = new Array(size).fill(0).map(() => new Array(size).fill(0));
+    grid = create2dArray(size, false);
+    degrees = create2dArray(size, 0);
+    colorMap = create2dArray(size, 0);
+    pathBuffers = Array(currentPalette.length).fill("");
 
-    // Reset path buffers
-    pathBuffers = new Array(currentPalette.length).fill("");
-
-    // Clear existing paths
-    for (const pathEl of pathElements) {
-      pathEl.setAttribute("d", "");
-    }
-
-    // Clear glow layer
+    pathElements.forEach((el) => el.setAttribute("d", ""));
     glowLayer.innerHTML = "";
 
-    // Spawn initial crawlers
     crawlers = [];
-    const totalCells = size * size;
     const numSeeds = Math.max(
       2,
-      Math.floor(totalCells / CONFIG.seedDensityArea),
+      Math.floor((size * size) / CONFIG.seedDensityArea),
     );
     totalSeedSlots = numSeeds;
 
     let spawned = 0;
     let attempts = 0;
+    const dirKeys = Object.keys(DIRS);
 
     while (spawned < numSeeds && attempts < numSeeds * 10) {
       attempts++;
@@ -725,13 +622,16 @@
       const sy = Math.floor(Math.random() * size);
 
       if (!grid[sx][sy]) {
-        const keys = Object.keys(DIRS);
-        const sDir = keys[Math.floor(Math.random() * keys.length)];
         degrees[sx][sy] = 1;
-        const randomColorIdx = Math.floor(
-          Math.random() * currentPalette.length,
+        crawlers.push(
+          new Crawler(
+            sx,
+            sy,
+            dirKeys[Math.floor(Math.random() * dirKeys.length)],
+            4,
+            Math.floor(Math.random() * currentPalette.length),
+          ),
         );
-        crawlers.push(new Crawler(sx, sy, sDir, 4, randomColorIdx));
         spawned++;
       }
     }
@@ -742,11 +642,9 @@
 
   function startGeneration() {
     if (isShuttingDown) return;
-
     applyTheme();
     initializeGeneration();
     updatePatternScroll();
-
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(animationLoop);
     }
@@ -762,10 +660,8 @@
       return;
     }
 
-    // Always schedule next frame to keep loop alive for glow updates
     animationFrameId = requestAnimationFrame(animationLoop);
 
-    // Skip updates if paused but keep loop running
     if (isPaused) return;
 
     if (!isRunning) {
@@ -775,36 +671,23 @@
 
     let active = false;
 
-    // Update all crawlers
     for (let i = crawlers.length - 1; i >= 0; i--) {
-      const crawler = crawlers[i];
-      const keepAlive = crawler.update();
-
-      if (keepAlive) {
+      if (crawlers[i].update()) {
         active = true;
       } else {
         crawlers.splice(i, 1);
       }
     }
 
-    // Try to fill gaps if we have room for more crawlers
-    if (crawlers.length < totalSeedSlots) {
-      if (findAndSpawnFill()) {
-        active = true;
-      }
-    }
-
-    if (crawlers.length > 0) {
+    if (crawlers.length < totalSeedSlots && findAndSpawnFill()) {
       active = true;
     }
 
-    // Flush accumulated path data to DOM
-    flushPathBuffers();
+    if (crawlers.length > 0) active = true;
 
-    // Update glow effects
+    flushPathBuffers();
     updateGlowEffects();
 
-    // Trigger fade-in on first frame
     if (!hasRenderedFirstFrame && active) {
       hasRenderedFirstFrame = true;
       requestAnimationFrame(() => {
@@ -816,7 +699,6 @@
       });
     }
 
-    // Handle generation completion
     if (!active) {
       isRunning = false;
       autoRegenTimeout = setTimeout(() => {
@@ -838,18 +720,14 @@
     debounceTimeout = setTimeout(() => {
       if (isShuttingDown) return;
 
-      const waitForHidden = () => {
-        if (isShuttingDown) return;
-        if (visualState === "hidden") {
-          startGeneration();
-        } else {
-          setTimeout(waitForHidden, 50);
-        }
-      };
-
       if (visualState === "hidden") {
         startGeneration();
       } else {
+        const waitForHidden = () => {
+          if (isShuttingDown) return;
+          if (visualState === "hidden") startGeneration();
+          else setTimeout(waitForHidden, 50);
+        };
         waitForHidden();
       }
     }, delay);
@@ -857,83 +735,40 @@
 
   function triggerRegeneration() {
     clearTimeout(autoRegenTimeout);
-
     if (visualState === "visible" || visualState === "fading-in") {
       setVisualState("fading-out");
     }
-
     scheduleRegeneration(Math.max(RESIZE_DEBOUNCE_TIME, FADE_DURATION));
   }
 
   // ===========================================================================
-  // Event handlers
+  // Event handlers and observers
   // ===========================================================================
-
-  function handleVisibilityChange() {
-    if (isShuttingDown) return;
-
-    if (document.visibilityState === "hidden") {
-      isPaused = true;
-    } else if (document.visibilityState === "visible") {
-      isPaused = false;
-    }
-  }
-
-  function handleScroll() {
-    updatePatternScroll();
-  }
 
   function cleanup() {
     isShuttingDown = true;
-
-    clearTimeout(debounceTimeout);
-    clearTimeout(autoRegenTimeout);
-    clearTimeout(transitionTimeout);
-
+    clearAllTimeouts();
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
-
     resizeObserver.disconnect();
     themeObserver.disconnect();
   }
 
-  // ===========================================================================
-  // Observers
-  // ===========================================================================
-
-  let lastWidth = 0;
-  let lastHeight = 0;
-
   const resizeObserver = new ResizeObserver(() => {
     if (isShuttingDown) return;
-
     const w = container.clientWidth;
     const h = container.clientHeight;
-
     if (w === lastWidth && h === lastHeight) return;
     lastWidth = w;
     lastHeight = h;
-
     triggerRegeneration();
   });
 
   const themeObserver = new MutationObserver((mutations) => {
     if (isShuttingDown) return;
-
-    let themeChanged = false;
-    for (const mutation of mutations) {
-      if (
-        mutation.type === "attributes" &&
-        mutation.attributeName === "data-theme"
-      ) {
-        themeChanged = true;
-        break;
-      }
-    }
-
-    if (themeChanged) {
+    if (mutations.some((m) => m.attributeName === "data-theme")) {
       triggerRegeneration();
     }
   });
@@ -948,10 +783,14 @@
   resizeObserver.observe(container);
   themeObserver.observe(document.documentElement, { attributes: true });
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
+  window.addEventListener("scroll", updatePatternScroll, { passive: true });
   window.addEventListener("pagehide", cleanup);
   window.addEventListener("beforeunload", cleanup);
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+  document.addEventListener("visibilitychange", () => {
+    if (!isShuttingDown) {
+      isPaused = document.visibilityState === "hidden";
+    }
+  });
 
   startGeneration();
 })();
