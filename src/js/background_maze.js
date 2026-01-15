@@ -1,10 +1,12 @@
-// deno-lint-ignore-file no-window-prefix no-window
+// deno-lint-ignore-file no-window no-window-prefix
 
 // Animated maze background generator
 //
-// Creates a continuously generating maze pattern that tiles seamlessly across the viewport.
+// Creates a continuously generating maze pattern that tiles seamlessly across the page.
 // Crawlers traverse a grid, drawing strokes that accumulate on a pattern canvas. The pattern
 // is then tiled across the display canvas with glow effects rendered at crawler head positions.
+// The canvas is absolutely positioned and sized to cover the full document, allowing native
+// browser scrolling without JavaScript intervention.
 
 (function () {
   // Grid and rendering parameters
@@ -54,7 +56,7 @@
   const DIR_ENTRIES = Object.entries(DIRS);
   const DIR_VECS = Object.values(DIRS);
 
-  // Canvas setup: display canvas is visible and viewport-sized, pattern canvas is offscreen
+  // Canvas setup: display canvas covers full document, pattern canvas is offscreen
   const container = document.getElementById("background-maze-div");
   const display = document.getElementById("background-maze-canvas");
   const dCtx = display.getContext("2d");
@@ -71,7 +73,12 @@
   let shutdown = false; // Set on page unload to stop all activity
   let firstFrame = false; // Tracks whether we've rendered at least one frame
   let frameId = null; // requestAnimationFrame handle
-  const timeouts = { debounce: null, regen: null, transition: null };
+  const timeouts = {
+    debounce: null,
+    regen: null,
+    transition: null,
+    resize: null,
+  };
 
   // Theme and rendering resources
   let palette = PALETTES.dark;
@@ -79,7 +86,10 @@
 
   // Generation state, reset on each new maze
   let grid, degrees, colorMap, crawlers, strokes, seedSlots;
-  let lastW = 0, lastH = 0; // Tracks container size to detect resize
+
+  // Cached dimensions to avoid forced reflows
+  let canvasWidth = 0;
+  let canvasHeight = 0;
 
   // Wraps a value into the range [0, m) handling negative values
   const wrap = (v, m) => (v % m + m) % m;
@@ -103,22 +113,52 @@
       return true;
     }).map(([k]) => k);
 
-  // Iterates over tile positions needed to cover the display, accounting for scroll offset
+  // Iterates over tile positions needed to cover the entire canvas
   const forTiles = (fn) => {
-    const off = window.scrollY % TILE;
-    for (let c = 0; c <= display.width / TILE + 1; c++) {
-      for (let r = 0; r <= display.height / TILE + 1; r++) {
-        fn(c * TILE, r * TILE - off);
+    const cols = Math.ceil(canvasWidth / TILE) + 1;
+    const rows = Math.ceil(canvasHeight / TILE) + 1;
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        fn(c * TILE, r * TILE);
       }
     }
   };
 
-  // Updates canvas pixel dimensions to match container size, preventing CSS scaling
+  // Calculates required canvas dimensions to cover the full document
+  function getRequiredDimensions() {
+    const width = container.clientWidth;
+    // Use the maximum of viewport height and document scroll height
+    const docHeight = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      window.innerHeight,
+    );
+    // Subtract navbar height approximation (container starts below navbar)
+    const navbarHeight = container.offsetTop;
+    const height = Math.max(
+      docHeight - navbarHeight,
+      window.innerHeight - navbarHeight,
+    );
+    return { width, height };
+  }
+
+  // Updates canvas pixel dimensions to cover the full scrollable area
   function syncCanvasSize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    if (display.width !== w) display.width = w;
-    if (display.height !== h) display.height = h;
+    if (canvasWidth <= 0 || canvasHeight <= 0) return false;
+    let changed = false;
+    if (display.width !== canvasWidth) {
+      display.width = canvasWidth;
+      changed = true;
+    }
+    if (display.height !== canvasHeight) {
+      display.height = canvasHeight;
+      changed = true;
+    }
+    // Also update container height to match canvas
+    if (changed) {
+      container.style.height = canvasHeight + "px";
+    }
+    return changed;
   }
 
   // Updates palette and regenerates glow sprites for the current theme
@@ -417,7 +457,7 @@
 
   // Composites the tiled pattern and glow effects onto the display canvas
   function render() {
-    syncCanvasSize();
+    if (canvasWidth <= 0 || canvasHeight <= 0) return;
 
     dCtx.fillStyle = palette.bg;
     dCtx.fillRect(0, 0, display.width, display.height);
@@ -432,8 +472,8 @@
       crawlers.forEach((c) => {
         const x = ox + c.ax - GLOW, y = oy + c.ay - GLOW;
         if (
-          x > -GLOW * 2 && x < display.width && y > -GLOW * 2 &&
-          y < display.height
+          x > -GLOW * 2 && x < canvasWidth && y > -GLOW * 2 &&
+          y < canvasHeight
         ) {
           dCtx.drawImage(glowSprites[c.color], x, y);
         }
@@ -572,25 +612,103 @@
     schedule(Math.max(300, FADE));
   }
 
-  // Cleanup on page unload
-  const cleanup = () => {
-    shutdown = true;
+  // Clears all pending timeouts
+  function clearAllTimeouts() {
     Object.values(timeouts).forEach(clearTimeout);
-    frameId && cancelAnimationFrame(frameId);
-    resizeObs.disconnect();
-    themeObs.disconnect();
-  };
+  }
 
-  // Observe container resize to trigger regeneration
-  const resizeObs = new ResizeObserver(() => {
-    if (shutdown) return;
-    const { clientWidth: w, clientHeight: h } = container;
-    if (w !== lastW || h !== lastH) {
-      lastW = w;
-      lastH = h;
-      syncCanvasSize();
-      trigger();
+  // Pauses activity when page is hidden, used for bfcache compatibility
+  function pause() {
+    paused = true;
+    clearAllTimeouts();
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
     }
+  }
+
+  // Resumes activity, reinitializing state if needed
+  function resume() {
+    paused = false;
+    // Recalculate dimensions in case they changed while paused
+    const { width, height } = getRequiredDimensions();
+    canvasWidth = width;
+    canvasHeight = height;
+    syncCanvasSize();
+    // Restart animation loop
+    frameId ||= requestAnimationFrame(loop);
+  }
+
+  // Full cleanup for permanent page unload
+  function cleanup() {
+    shutdown = true;
+    clearAllTimeouts();
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+    resizeObs.disconnect();
+    bodyResizeObs.disconnect();
+    themeObs.disconnect();
+  }
+
+  // Checks if document dimensions changed and updates canvas accordingly
+  function checkDimensions() {
+    if (shutdown) return;
+    const { width, height } = getRequiredDimensions();
+    if (width !== canvasWidth || height !== canvasHeight) {
+      handleResize(width, height);
+    }
+  }
+
+  // Handles resize by updating cached dimensions and re-rendering
+  function handleResize(width, height) {
+    if (shutdown) return;
+
+    const oldW = canvasWidth;
+    const oldH = canvasHeight;
+    canvasWidth = width;
+    canvasHeight = height;
+
+    // Sync canvas size and re-render immediately to prevent stretching
+    const sizeChanged = syncCanvasSize();
+
+    // Only trigger regeneration if size actually changed significantly
+    if (sizeChanged && (oldW !== width || oldH !== height)) {
+      // Render immediately with current pattern to prevent visual stretching
+      if (running || state !== "hidden") {
+        render();
+      }
+      // Only trigger full regeneration on width change, not height
+      // Height changes just need re-tiling which render() handles
+      if (oldW !== width) {
+        trigger();
+      }
+    }
+  }
+
+  // Debounced dimension check for body size changes
+  function debouncedDimensionCheck() {
+    clearTimeout(timeouts.resize);
+    timeouts.resize = setTimeout(checkDimensions, 100);
+  }
+
+  // Observe container resize for width changes
+  const resizeObs = new ResizeObserver((entries) => {
+    if (shutdown) return;
+    for (const entry of entries) {
+      const { width } = entry.contentRect;
+      if (width > 0) {
+        // Width changed, do a full dimension check
+        checkDimensions();
+      }
+    }
+  });
+
+  // Observe body for height changes (content changes affecting scroll height)
+  const bodyResizeObs = new ResizeObserver(() => {
+    if (shutdown) return;
+    debouncedDimensionCheck();
   });
 
   // Observe theme attribute changes
@@ -598,16 +716,58 @@
     if (!shutdown && m.some((x) => x.attributeName === "data-theme")) trigger();
   });
 
-  // Initialize observers and event listeners
+  // Initialize observers
   resizeObs.observe(container);
+  bodyResizeObs.observe(document.body);
   themeObs.observe(document.documentElement, { attributes: true });
-  window.addEventListener("scroll", render, { passive: true });
-  window.addEventListener("pagehide", cleanup);
-  window.addEventListener("beforeunload", cleanup);
-  document.addEventListener(
-    "visibilitychange",
-    () => !shutdown && (paused = document.visibilityState === "hidden"),
-  );
+
+  // Handle page visibility changes for tab switching
+  document.addEventListener("visibilitychange", () => {
+    if (shutdown) return;
+    if (document.visibilityState === "hidden") {
+      pause();
+    } else {
+      resume();
+    }
+  });
+
+  // Handle bfcache: pagehide fires when navigating away
+  window.addEventListener("pagehide", (event) => {
+    if (event.persisted) {
+      // Page is being cached, just pause without full cleanup
+      pause();
+    } else {
+      // Page is being discarded, do full cleanup
+      cleanup();
+    }
+  });
+
+  // Handle bfcache: pageshow fires when page is shown, including from cache
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      // Page was restored from bfcache, reset state and restart
+      shutdown = false;
+      state = "hidden";
+      display.classList.remove("loaded");
+
+      // Reconnect observers in case they were disconnected
+      resizeObs.observe(container);
+      bodyResizeObs.observe(document.body);
+      themeObs.observe(document.documentElement, { attributes: true });
+
+      // Get fresh dimensions and restart
+      const { width, height } = getRequiredDimensions();
+      canvasWidth = width;
+      canvasHeight = height;
+
+      start();
+    }
+  });
+
+  // Initial dimension capture
+  const initialDims = getRequiredDimensions();
+  canvasWidth = initialDims.width;
+  canvasHeight = initialDims.height;
 
   start();
 })();
