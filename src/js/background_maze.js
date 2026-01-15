@@ -12,25 +12,29 @@
     turnProbability: 0.15,
     chanceToBranch: 0.08,
     colorChangeRate: 15,
-    growthSpeed: 1.0,
+    growthSpeed: 0.75,
     seedDensityArea: 200,
     tileMultiplier: 9,
     baseDensityUnit: 9,
   };
 
-  const PATTERN_GRID_SIZE = CONFIG.baseDensityUnit * CONFIG.tileMultiplier;
-  const PATTERN_PIXEL_SIZE = PATTERN_GRID_SIZE * CONFIG.gridSize;
-
-  const PALETTE_DARK = ["#2CE1D8", "#FFF9ED", "#fd5b5b", "#FFF9ED"];
-  const PALETTE_LIGHT = ["#4bcac4", "#02020D", "#fd5b5b", "#02020D"];
-  const BACKGROUND_DARK = "#02020D";
-  const BACKGROUND_LIGHT = "#fffdf8";
-
-  const FADE_DURATION = 800;
-  const RESIZE_DEBOUNCE_TIME = 300;
-  const AUTO_REGEN_DELAY = 1000;
+  const GRID_SIZE = CONFIG.baseDensityUnit * CONFIG.tileMultiplier;
+  const TILE_SIZE = GRID_SIZE * CONFIG.gridSize;
   const GLOW_RADIUS = 25;
-  const GLOW_SPRITE_SIZE = GLOW_RADIUS * 2;
+  const FADE_DURATION = 800;
+  const RESIZE_DEBOUNCE = 300;
+  const REGEN_DELAY = 1000;
+
+  const PALETTES = {
+    dark: {
+      colors: ["#2CE1D8", "#FFF9ED", "#fd5b5b", "#FFF9ED"],
+      bg: "#02020D",
+    },
+    light: {
+      colors: ["#4bcac4", "#02020D", "#fd5b5b", "#02020D"],
+      bg: "#fffdf8",
+    },
+  };
 
   const DIRS = {
     N: { x: 0, y: -1 },
@@ -40,25 +44,25 @@
     NW: { x: -1, y: -1 },
     SE: { x: 1, y: 1 },
   };
+  const DIR_KEYS = Object.keys(DIRS);
+  const DIR_ENTRIES = Object.entries(DIRS);
+  const DIR_VECS = Object.values(DIRS);
 
   // ===========================================================================
   // Canvas setup
   // ===========================================================================
 
   const container = document.getElementById("background-maze-div");
-  const displayCanvas = document.getElementById("background-maze-canvas");
-  const displayCtx = displayCanvas.getContext("2d");
-
-  const patternCanvas = document.createElement("canvas");
-  patternCanvas.width = PATTERN_PIXEL_SIZE;
-  patternCanvas.height = PATTERN_PIXEL_SIZE;
-  const patternCtx = patternCanvas.getContext("2d");
-
-  // Pre-rendered glow sprites, one per palette color
-  let glowSprites = [];
+  const display = document.getElementById("background-maze-canvas");
+  const displayCtx = display.getContext("2d");
+  const pattern = Object.assign(document.createElement("canvas"), {
+    width: TILE_SIZE,
+    height: TILE_SIZE,
+  });
+  const patternCtx = pattern.getContext("2d");
 
   // ===========================================================================
-  // State management
+  // State
   // ===========================================================================
 
   let visualState = "hidden";
@@ -72,143 +76,114 @@
   let transitionTimeout = null;
   let animationFrameId = null;
 
-  let currentPalette = PALETTE_DARK;
-  let currentBackground = BACKGROUND_DARK;
-  let isLightTheme = false;
+  let palette = PALETTES.dark;
+  let glowSprites = [];
 
-  let grid = [];
-  let degrees = [];
-  let colorMap = [];
-  let crawlers = [];
+  let grid, degrees, colorMap, crawlers, strokeQueues;
   let totalSeedSlots = 0;
-
   let lastWidth = 0;
   let lastHeight = 0;
 
-  // Stroke queue for batched drawing, indexed by color
-  let strokeQueues = [];
-
   // ===========================================================================
-  // Utility functions
+  // Utilities
   // ===========================================================================
 
-  function create2dArray(size, fillValue) {
-    return Array.from({ length: size }, () => Array(size).fill(fillValue));
+  const wrap = (v, max) => (v + max) % max;
+
+  function forEachTile(callback) {
+    const cols = Math.ceil(display.width / TILE_SIZE) + 1;
+    const rows = Math.ceil(display.height / TILE_SIZE) + 1;
+    const scrollOffset = window.scrollY % TILE_SIZE;
+
+    for (let col = 0; col < cols; col++) {
+      for (let row = 0; row < rows; row++) {
+        callback(col * TILE_SIZE, row * TILE_SIZE - scrollOffset);
+      }
+    }
   }
 
-  function isDiagonalBlocked(x, y, vec) {
-    const cols = PATTERN_GRID_SIZE;
-    const rows = PATTERN_GRID_SIZE;
-    const n1x = (x + vec.x + cols) % cols;
-    const n2y = (y + vec.y + rows) % rows;
-    return grid[n1x][y] && grid[x][n2y];
+  function forEachWrap(x1, y1, x2, y2, buffer, callback) {
+    const wx = Math.max(x1, x2) > TILE_SIZE - buffer
+      ? -TILE_SIZE
+      : Math.min(x1, x2) < buffer
+      ? TILE_SIZE
+      : 0;
+    const wy = Math.max(y1, y2) > TILE_SIZE - buffer
+      ? -TILE_SIZE
+      : Math.min(y1, y2) < buffer
+      ? TILE_SIZE
+      : 0;
+
+    callback(x1, y1, x2, y2);
+    if (wx) callback(x1 + wx, y1, x2 + wx, y2);
+    if (wy) callback(x1, y1 + wy, x2, y2 + wy);
+    if (wx && wy) callback(x1 + wx, y1 + wy, x2 + wx, y2 + wy);
   }
 
   function getValidMoves(x, y) {
-    const validMoves = [];
-    const cols = PATTERN_GRID_SIZE;
-    const rows = PATTERN_GRID_SIZE;
+    return DIR_ENTRIES.filter(([, vec]) => {
+      const tx = wrap(x + vec.x, GRID_SIZE);
+      const ty = wrap(y + vec.y, GRID_SIZE);
+      if (grid[tx][ty]) return false;
 
-    for (const [key, vec] of Object.entries(DIRS)) {
-      const tx = (x + vec.x + cols) % cols;
-      const ty = (y + vec.y + rows) % rows;
+      const isDiag = vec.x && vec.y;
+      if (
+        isDiag && grid[wrap(x + vec.x, GRID_SIZE)][y] &&
+        grid[x][wrap(y + vec.y, GRID_SIZE)]
+      ) return false;
 
-      if (grid[tx][ty]) continue;
-
-      const isDiagonal = Math.abs(vec.x) === 1 && Math.abs(vec.y) === 1;
-      if (!isDiagonal || !isDiagonalBlocked(x, y, vec)) {
-        validMoves.push(key);
-      }
-    }
-    return validMoves;
-  }
-
-  function clearAllTimeouts() {
-    clearTimeout(debounceTimeout);
-    clearTimeout(autoRegenTimeout);
-    clearTimeout(transitionTimeout);
+      return true;
+    }).map(([key]) => key);
   }
 
   // ===========================================================================
-  // Glow sprite generation
-  // ===========================================================================
-
-  function createGlowSprite(color) {
-    const canvas = document.createElement("canvas");
-    canvas.width = GLOW_SPRITE_SIZE;
-    canvas.height = GLOW_SPRITE_SIZE;
-    const ctx = canvas.getContext("2d");
-
-    const cx = GLOW_RADIUS;
-    const cy = GLOW_RADIUS;
-
-    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, GLOW_RADIUS);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(
-      1,
-      isLightTheme ? "rgba(255,255,255,0)" : "rgba(0,0,0,0)",
-    );
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(cx, cy, GLOW_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
-
-    return canvas;
-  }
-
-  function regenerateGlowSprites() {
-    glowSprites = currentPalette.map((color) => createGlowSprite(color));
-  }
-
-  // ===========================================================================
-  // Theme handling
+  // Theme and visuals
   // ===========================================================================
 
   function applyTheme() {
-    isLightTheme =
+    const isLight =
       document.documentElement.getAttribute("data-theme") === "light";
-    currentPalette = isLightTheme ? PALETTE_LIGHT : PALETTE_DARK;
-    currentBackground = isLightTheme ? BACKGROUND_LIGHT : BACKGROUND_DARK;
-    regenerateGlowSprites();
+    palette = isLight ? PALETTES.light : PALETTES.dark;
+
+    glowSprites = palette.colors.map((color) => {
+      const canvas = Object.assign(document.createElement("canvas"), {
+        width: GLOW_RADIUS * 2,
+        height: GLOW_RADIUS * 2,
+      });
+      const ctx = canvas.getContext("2d");
+      const grad = ctx.createRadialGradient(
+        GLOW_RADIUS,
+        GLOW_RADIUS,
+        0,
+        GLOW_RADIUS,
+        GLOW_RADIUS,
+        GLOW_RADIUS,
+      );
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, isLight ? "rgba(255,255,255,0)" : "rgba(0,0,0,0)");
+      ctx.fillStyle = grad;
+      ctx.arc(GLOW_RADIUS, GLOW_RADIUS, GLOW_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+      return canvas;
+    });
   }
 
-  // ===========================================================================
-  // Visual state machine
-  // ===========================================================================
-
-  function setVisualState(newState) {
-    if (isShuttingDown || visualState === newState) return;
-
+  function setVisualState(state) {
+    if (isShuttingDown || visualState === state) return;
     clearTimeout(transitionTimeout);
-    visualState = newState;
+    visualState = state;
 
-    if (newState === "fading-out" || newState === "fading-in") {
-      displayCanvas.classList.toggle("loaded", newState === "fading-in");
-      const nextState = newState === "fading-in" ? "visible" : "hidden";
+    if (state === "fading-in" || state === "fading-out") {
+      display.classList.toggle("loaded", state === "fading-in");
       transitionTimeout = setTimeout(
-        () => setVisualState(nextState),
+        () => setVisualState(state === "fading-in" ? "visible" : "hidden"),
         FADE_DURATION,
       );
     }
   }
 
   // ===========================================================================
-  // Canvas sizing
-  // ===========================================================================
-
-  function updateCanvasSize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-
-    if (displayCanvas.width !== w || displayCanvas.height !== h) {
-      displayCanvas.width = w;
-      displayCanvas.height = h;
-    }
-  }
-
-  // ===========================================================================
-  // Crawler class
+  // Crawler
   // ===========================================================================
 
   class Crawler {
@@ -219,17 +194,15 @@
       this.forceLen = forceLen;
       this.colorIdx = colorIdx;
       this.stepCount = 0;
-      this.currentSegLen = 0;
+      this.segLen = 0;
       this.state = "THINKING";
 
-      if (grid[x]?.[y] !== undefined) {
-        grid[x][y] = true;
-        colorMap[x][y] = colorIdx;
-      }
+      grid[x][y] = true;
+      colorMap[x][y] = colorIdx;
 
-      const gs = CONFIG.gridSize;
-      this.animX = x * gs + gs / 2;
-      this.animY = y * gs + gs / 2;
+      const center = CONFIG.gridSize / 2;
+      this.animX = x * CONFIG.gridSize + center;
+      this.animY = y * CONFIG.gridSize + center;
       this.targetX = this.animX;
       this.targetY = this.animY;
     }
@@ -239,88 +212,72 @@
     }
 
     think() {
-      const validMoves = getValidMoves(this.x, this.y);
-      if (validMoves.length === 0) return false;
+      const moves = getValidMoves(this.x, this.y);
+      if (!moves.length) return false;
 
-      const nextDir = this.chooseDirection(validMoves);
-      this.stepCount++;
+      const dir = this.chooseDir(moves);
+      const vec = DIRS[dir];
+      const nx = wrap(this.x + vec.x, GRID_SIZE);
+      const ny = wrap(this.y + vec.y, GRID_SIZE);
 
-      let nextColorIdx = this.colorIdx;
-      if (this.stepCount > CONFIG.colorChangeRate) {
+      if (++this.stepCount > CONFIG.colorChangeRate) {
         this.stepCount = 0;
-        nextColorIdx = (this.colorIdx + 1) % currentPalette.length;
+        this.colorIdx = (this.colorIdx + 1) % palette.colors.length;
       }
-
-      const vec = DIRS[nextDir];
-      const cols = PATTERN_GRID_SIZE;
-      const rows = PATTERN_GRID_SIZE;
-      const nx = (this.x + vec.x + cols) % cols;
-      const ny = (this.y + vec.y + rows) % rows;
 
       grid[nx][ny] = true;
       degrees[this.x][this.y]++;
       degrees[nx][ny]++;
-      colorMap[nx][ny] = nextColorIdx;
+      colorMap[nx][ny] = this.colorIdx;
 
-      this.tryBranch(validMoves, nextDir);
+      this.tryBranch(moves, dir);
 
-      this.currentSegLen = nextDir !== this.dir ? 0 : this.currentSegLen + 1;
+      this.segLen = dir === this.dir ? this.segLen + 1 : 0;
       if (this.forceLen > 0) this.forceLen--;
 
-      const gs = CONFIG.gridSize;
-      this.targetX = this.animX + vec.x * gs;
-      this.targetY = this.animY + vec.y * gs;
+      this.targetX = this.animX + vec.x * CONFIG.gridSize;
+      this.targetY = this.animY + vec.y * CONFIG.gridSize;
       this.x = nx;
       this.y = ny;
-      this.dir = nextDir;
-      this.colorIdx = nextColorIdx;
+      this.dir = dir;
       this.state = "MOVING";
       return true;
     }
 
-    chooseDirection(validMoves) {
-      const canContinue = validMoves.includes(this.dir);
+    chooseDir(moves) {
+      const canContinue = moves.includes(this.dir);
 
       if (this.forceLen > 0) {
-        return canContinue ? this.dir : this.pickBestTurn(validMoves);
+        return canContinue ? this.dir : this.pickBest(moves);
       }
 
-      if (this.currentSegLen > CONFIG.maxSegmentLength) {
-        const turns = validMoves.filter((d) => d !== this.dir);
-        if (turns.length > 0) return this.pickBestTurn(turns);
+      if (this.segLen > CONFIG.maxSegmentLength) {
+        const turns = moves.filter((d) => d !== this.dir);
+        if (turns.length) return this.pickBest(turns);
         if (canContinue) {
-          this.currentSegLen = 0;
+          this.segLen = 0;
           return this.dir;
         }
-        return this.pickBestTurn(validMoves);
       }
 
-      if (this.currentSegLen < CONFIG.minSegmentLength && canContinue) {
-        return this.dir;
+      if (this.segLen < CONFIG.minSegmentLength && canContinue) return this.dir;
+      if (Math.random() < CONFIG.turnProbability && moves.length > 1) {
+        return this.pickBest(moves);
       }
 
-      if (Math.random() < CONFIG.turnProbability && validMoves.length > 1) {
-        return this.pickBestTurn(validMoves);
-      }
-
-      return canContinue ? this.dir : this.pickBestTurn(validMoves);
+      return canContinue ? this.dir : this.pickBest(moves);
     }
 
-    tryBranch(validMoves, nextDir) {
+    tryBranch(moves, nextDir) {
       if (this.forceLen > 0 || crawlers.length >= totalSeedSlots) return;
       if (Math.random() >= CONFIG.chanceToBranch) return;
+      if (degrees[this.x][this.y] >= 3) return;
 
-      const branchOpts = validMoves.filter((d) => d !== nextDir);
-      if (branchOpts.length > 0 && degrees[this.x][this.y] < 3) {
+      const opts = moves.filter((d) => d !== nextDir);
+      if (opts.length) {
         degrees[this.x][this.y]++;
         crawlers.push(
-          new Crawler(
-            this.x,
-            this.y,
-            this.pickBestTurn(branchOpts),
-            0,
-            this.colorIdx,
-          ),
+          new Crawler(this.x, this.y, this.pickBest(opts), 0, this.colorIdx),
         );
       }
     }
@@ -328,95 +285,56 @@
     move() {
       const dx = this.targetX - this.animX;
       const dy = this.targetY - this.animY;
-      const distSq = dx * dx + dy * dy;
-      const speedSq = CONFIG.growthSpeed * CONFIG.growthSpeed;
+      const dist = Math.sqrt(dx * dx + dy * dy);
 
-      let nextX, nextY, reached;
-
-      if (distSq <= speedSq) {
-        nextX = this.targetX;
-        nextY = this.targetY;
-        reached = true;
+      let nx, ny;
+      if (dist <= CONFIG.growthSpeed) {
+        nx = this.targetX;
+        ny = this.targetY;
       } else {
         const angle = Math.atan2(dy, dx);
-        nextX = this.animX + Math.cos(angle) * CONFIG.growthSpeed;
-        nextY = this.animY + Math.sin(angle) * CONFIG.growthSpeed;
-        reached = false;
+        nx = this.animX + Math.cos(angle) * CONFIG.growthSpeed;
+        ny = this.animY + Math.sin(angle) * CONFIG.growthSpeed;
       }
 
-      this.queueStroke(this.animX, this.animY, nextX, nextY);
-      this.animX = nextX;
-      this.animY = nextY;
+      forEachWrap(
+        this.animX,
+        this.animY,
+        nx,
+        ny,
+        CONFIG.strokeWidth * 2,
+        (x1, y1, x2, y2) => {
+          strokeQueues[this.colorIdx].push({ x1, y1, x2, y2 });
+        },
+      );
 
-      if (reached) {
-        const w = PATTERN_PIXEL_SIZE;
-        if (this.animX < 0) this.animX += w;
-        else if (this.animX >= w) this.animX -= w;
-        if (this.animY < 0) this.animY += w;
-        else if (this.animY >= w) this.animY -= w;
+      this.animX = nx;
+      this.animY = ny;
+
+      if (nx === this.targetX && ny === this.targetY) {
+        this.animX = wrap(this.animX, TILE_SIZE) || this.animX;
+        this.animY = wrap(this.animY, TILE_SIZE) || this.animY;
+        if (this.animX < 0) this.animX += TILE_SIZE;
+        if (this.animY < 0) this.animY += TILE_SIZE;
+        if (this.animX >= TILE_SIZE) this.animX -= TILE_SIZE;
+        if (this.animY >= TILE_SIZE) this.animY -= TILE_SIZE;
         this.state = "THINKING";
       }
       return true;
     }
 
-    queueStroke(x1, y1, x2, y2) {
-      const w = PATTERN_PIXEL_SIZE;
-      const buffer = CONFIG.strokeWidth * 2;
-
-      const wrappedX = Math.max(x1, x2) > w - buffer
-        ? -w
-        : Math.min(x1, x2) < buffer
-        ? w
-        : 0;
-      const wrappedY = Math.max(y1, y2) > w - buffer
-        ? -w
-        : Math.min(y1, y2) < buffer
-        ? w
-        : 0;
-
-      strokeQueues[this.colorIdx].push({ x1, y1, x2, y2 });
-
-      if (wrappedX !== 0) {
-        strokeQueues[this.colorIdx].push({
-          x1: x1 + wrappedX,
-          y1,
-          x2: x2 + wrappedX,
-          y2,
-        });
-      }
-      if (wrappedY !== 0) {
-        strokeQueues[this.colorIdx].push({
-          x1,
-          y1: y1 + wrappedY,
-          x2,
-          y2: y2 + wrappedY,
-        });
-      }
-      if (wrappedX !== 0 && wrappedY !== 0) {
-        strokeQueues[this.colorIdx].push({
-          x1: x1 + wrappedX,
-          y1: y1 + wrappedY,
-          x2: x2 + wrappedX,
-          y2: y2 + wrappedY,
-        });
-      }
-    }
-
-    pickBestTurn(options) {
+    pickBest(options) {
       const scored = options.map((opt) => {
-        let score = this.isAngle45(this.dir, opt) ? 10 : 0;
-
+        let score = this.isAngle45(opt) ? 10 : 0;
         const v = DIRS[opt];
-        const cols = PATTERN_GRID_SIZE;
-        const rows = PATTERN_GRID_SIZE;
-        const tx = (this.x + v.x + cols) % cols;
-        const ty = (this.y + v.y + rows) % rows;
+        const tx = wrap(this.x + v.x, GRID_SIZE);
+        const ty = wrap(this.y + v.y, GRID_SIZE);
 
         let neighbors = 0;
-        for (const n of Object.values(DIRS)) {
-          const nx = (tx + n.x + cols) % cols;
-          const ny = (ty + n.y + rows) % rows;
-          if (!(nx === this.x && ny === this.y) && grid[nx][ny]) neighbors++;
+        for (const n of DIR_VECS) {
+          const nx = wrap(tx + n.x, GRID_SIZE);
+          const ny = wrap(ty + n.y, GRID_SIZE);
+          if ((nx !== this.x || ny !== this.y) && grid[nx][ny]) neighbors++;
         }
         if (neighbors === 1) score += 5;
 
@@ -424,19 +342,16 @@
       });
 
       scored.sort((a, b) => b.score - a.score);
-
       return scored.length > 1 && Math.random() < 0.2
         ? scored[Math.floor(Math.random() * scored.length)].opt
         : scored[0].opt;
     }
 
-    isAngle45(d1, d2) {
-      if (d1 === d2) return false;
-      const v1 = DIRS[d1];
-      const v2 = DIRS[d2];
-      const diag1 = Math.abs(v1.x) + Math.abs(v1.y) === 2;
-      const diag2 = Math.abs(v2.x) + Math.abs(v2.y) === 2;
-      return diag1 !== diag2;
+    isAngle45(other) {
+      if (this.dir === other) return false;
+      const v1 = DIRS[this.dir], v2 = DIRS[other];
+      return (Math.abs(v1.x) + Math.abs(v1.y) === 2) !==
+        (Math.abs(v2.x) + Math.abs(v2.y) === 2);
     }
   }
 
@@ -445,58 +360,51 @@
   // ===========================================================================
 
   function findAndSpawnFill() {
-    const lockedCells = new Set(
+    const locked = new Set(
       crawlers.filter((c) => c.state === "MOVING").map((c) => `${c.x},${c.y}`),
     );
 
     const candidates = [];
-    const weakCandidates = [];
-    const size = PATTERN_GRID_SIZE;
-    const startRow = Math.floor(Math.random() * size);
+    const weak = [];
+    const startRow = Math.floor(Math.random() * GRID_SIZE);
 
-    for (let x = 0; x < size; x += 2) {
+    for (let x = 0; x < GRID_SIZE; x += 2) {
       for (let i = 0; i < 50; i++) {
-        const y = (startRow + i) % size;
-
-        if (!grid[x][y] || lockedCells.has(`${x},${y}`) || degrees[x][y] >= 3) {
+        const y = wrap(startRow + i, GRID_SIZE);
+        if (!grid[x][y] || locked.has(`${x},${y}`) || degrees[x][y] >= 3) {
           continue;
         }
 
-        const validDirs = getValidMoves(x, y);
-        if (validDirs.length === 0) continue;
+        const moves = getValidMoves(x, y);
+        if (!moves.length) continue;
 
-        const strongDirs = validDirs.filter((dir) => {
+        const strong = moves.filter((dir) => {
           const v = DIRS[dir];
-          const tx = (x + v.x + size) % size;
-          const ty = (y + v.y + size) % size;
-          const ttx = (tx + v.x + size) % size;
-          const tty = (ty + v.y + size) % size;
-          return !grid[ttx][tty];
+          const tx = wrap(x + v.x, GRID_SIZE);
+          const ty = wrap(y + v.y, GRID_SIZE);
+          return !grid[wrap(tx + v.x, GRID_SIZE)][wrap(ty + v.y, GRID_SIZE)];
         });
 
-        if (strongDirs.length > 0) {
-          candidates.push({ x, y, dirs: strongDirs });
-        } else {
-          weakCandidates.push({ x, y, dirs: validDirs });
-        }
+        (strong.length ? candidates : weak).push({
+          x,
+          y,
+          dirs: strong.length ? strong : moves,
+        });
       }
     }
 
-    const pool = candidates.length > 0 ? candidates : weakCandidates;
-    if (pool.length === 0) return false;
+    const pool = candidates.length ? candidates : weak;
+    if (!pool.length) return false;
 
-    const choice = pool[Math.floor(Math.random() * pool.length)];
-    const chosenDir =
-      choice.dirs[Math.floor(Math.random() * choice.dirs.length)];
-
-    degrees[choice.x][choice.y]++;
+    const { x, y, dirs } = pool[Math.floor(Math.random() * pool.length)];
+    degrees[x][y]++;
     crawlers.push(
       new Crawler(
-        choice.x,
-        choice.y,
-        chosenDir,
+        x,
+        y,
+        dirs[Math.floor(Math.random() * dirs.length)],
         4,
-        colorMap[choice.x][choice.y],
+        colorMap[x][y],
       ),
     );
     return true;
@@ -506,91 +414,47 @@
   // Rendering
   // ===========================================================================
 
-  function flushStrokeQueues() {
+  function flushStrokes() {
     patternCtx.lineWidth = CONFIG.strokeWidth;
     patternCtx.lineCap = "round";
     patternCtx.lineJoin = "round";
 
-    for (let i = 0; i < strokeQueues.length; i++) {
-      const queue = strokeQueues[i];
-      if (queue.length === 0) continue;
-
-      patternCtx.strokeStyle = currentPalette[i];
+    strokeQueues.forEach((queue, i) => {
+      if (!queue.length) return;
+      patternCtx.strokeStyle = palette.colors[i];
       patternCtx.beginPath();
-
-      for (const s of queue) {
+      queue.forEach((s) => {
         patternCtx.moveTo(s.x1, s.y1);
         patternCtx.lineTo(s.x2, s.y2);
-      }
-
+      });
       patternCtx.stroke();
       strokeQueues[i] = [];
-    }
+    });
   }
 
-  function renderDisplay() {
-    const w = displayCanvas.width;
-    const h = displayCanvas.height;
-    const scrollOffset = window.scrollY % PATTERN_PIXEL_SIZE;
+  function render() {
+    displayCtx.fillStyle = palette.bg;
+    displayCtx.fillRect(0, 0, display.width, display.height);
 
-    // Clear and draw tiled pattern
-    displayCtx.fillStyle = currentBackground;
-    displayCtx.fillRect(0, 0, w, h);
+    forEachTile((x, y) => displayCtx.drawImage(pattern, x, y));
 
-    const cols = Math.ceil(w / PATTERN_PIXEL_SIZE) + 1;
-    const rows = Math.ceil(h / PATTERN_PIXEL_SIZE) + 1;
+    if (!crawlers.length) return;
 
-    for (let col = 0; col < cols; col++) {
-      for (let row = 0; row < rows; row++) {
-        displayCtx.drawImage(
-          patternCanvas,
-          col * PATTERN_PIXEL_SIZE,
-          row * PATTERN_PIXEL_SIZE - scrollOffset,
-        );
-      }
-    }
+    const isLight = palette === PALETTES.light;
+    displayCtx.globalCompositeOperation = isLight ? "source-over" : "screen";
 
-    // Draw glow effects
-    renderGlowEffects(scrollOffset);
-  }
-
-  function renderGlowEffects(scrollOffset) {
-    if (crawlers.length === 0) return;
-
-    const w = displayCanvas.width;
-    const h = displayCanvas.height;
-    const patSize = PATTERN_PIXEL_SIZE;
-
-    const cols = Math.ceil(w / patSize) + 1;
-    const rows = Math.ceil(h / patSize) + 1;
-
-    displayCtx.globalCompositeOperation = isLightTheme
-      ? "source-over"
-      : "screen";
-
-    for (let col = 0; col < cols; col++) {
-      for (let row = 0; row < rows; row++) {
-        const ox = col * patSize;
-        const oy = row * patSize - scrollOffset;
-
-        for (const crawler of crawlers) {
-          const cx = ox + crawler.animX - GLOW_RADIUS;
-          const cy = oy + crawler.animY - GLOW_RADIUS;
-
-          // Skip if completely outside viewport
-          if (
-            cx + GLOW_SPRITE_SIZE < 0 ||
-            cx > w ||
-            cy + GLOW_SPRITE_SIZE < 0 ||
-            cy > h
-          ) {
-            continue;
-          }
-
-          displayCtx.drawImage(glowSprites[crawler.colorIdx], cx, cy);
+    forEachTile((ox, oy) => {
+      for (const c of crawlers) {
+        const cx = ox + c.animX - GLOW_RADIUS;
+        const cy = oy + c.animY - GLOW_RADIUS;
+        if (
+          cx + GLOW_RADIUS * 2 >= 0 && cx <= display.width &&
+          cy + GLOW_RADIUS * 2 >= 0 && cy <= display.height
+        ) {
+          displayCtx.drawImage(glowSprites[c.colorIdx], cx, cy);
         }
       }
-    }
+    });
 
     displayCtx.globalCompositeOperation = "source-over";
   }
@@ -599,43 +463,40 @@
   // Generation control
   // ===========================================================================
 
-  function initializeGeneration() {
-    const size = PATTERN_GRID_SIZE;
-
-    grid = create2dArray(size, false);
-    degrees = create2dArray(size, 0);
-    colorMap = create2dArray(size, 0);
-    strokeQueues = currentPalette.map(() => []);
-
-    // Clear pattern canvas
-    patternCtx.fillStyle = currentBackground;
-    patternCtx.fillRect(0, 0, PATTERN_PIXEL_SIZE, PATTERN_PIXEL_SIZE);
-
-    crawlers = [];
-    const numSeeds = Math.max(
-      2,
-      Math.floor((size * size) / CONFIG.seedDensityArea),
+  function initGeneration() {
+    grid = Array.from(
+      { length: GRID_SIZE },
+      () => Array(GRID_SIZE).fill(false),
     );
-    totalSeedSlots = numSeeds;
+    degrees = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+    colorMap = Array.from(
+      { length: GRID_SIZE },
+      () => Array(GRID_SIZE).fill(0),
+    );
+    strokeQueues = palette.colors.map(() => []);
+    crawlers = [];
 
-    let spawned = 0;
-    let attempts = 0;
-    const dirKeys = Object.keys(DIRS);
+    patternCtx.fillStyle = palette.bg;
+    patternCtx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
 
-    while (spawned < numSeeds && attempts < numSeeds * 10) {
-      attempts++;
-      const sx = Math.floor(Math.random() * size);
-      const sy = Math.floor(Math.random() * size);
+    totalSeedSlots = Math.max(
+      2,
+      Math.floor((GRID_SIZE * GRID_SIZE) / CONFIG.seedDensityArea),
+    );
 
-      if (!grid[sx][sy]) {
-        degrees[sx][sy] = 1;
+    let spawned = 0, attempts = 0;
+    while (spawned < totalSeedSlots && attempts++ < totalSeedSlots * 10) {
+      const x = Math.floor(Math.random() * GRID_SIZE);
+      const y = Math.floor(Math.random() * GRID_SIZE);
+      if (!grid[x][y]) {
+        degrees[x][y] = 1;
         crawlers.push(
           new Crawler(
-            sx,
-            sy,
-            dirKeys[Math.floor(Math.random() * dirKeys.length)],
+            x,
+            y,
+            DIR_KEYS[Math.floor(Math.random() * DIR_KEYS.length)],
             4,
-            Math.floor(Math.random() * currentPalette.length),
+            Math.floor(Math.random() * palette.colors.length),
           ),
         );
         spawned++;
@@ -649,60 +510,50 @@
   function startGeneration() {
     if (isShuttingDown) return;
     applyTheme();
-    updateCanvasSize();
-    initializeGeneration();
-    if (!animationFrameId) {
-      animationFrameId = requestAnimationFrame(animationLoop);
-    }
+    display.width = container.clientWidth;
+    display.height = container.clientHeight;
+    initGeneration();
+    animationFrameId ||= requestAnimationFrame(loop);
   }
 
   // ===========================================================================
-  // Animation loop
+  // Main loop
   // ===========================================================================
 
-  function animationLoop() {
+  function loop() {
     if (isShuttingDown) {
       animationFrameId = null;
       return;
     }
-
-    animationFrameId = requestAnimationFrame(animationLoop);
+    animationFrameId = requestAnimationFrame(loop);
 
     if (isPaused) return;
-
     if (!isRunning) {
-      renderDisplay();
+      render();
       return;
     }
 
     let active = false;
-
     for (let i = crawlers.length - 1; i >= 0; i--) {
-      if (crawlers[i].update()) {
-        active = true;
-      } else {
-        crawlers.splice(i, 1);
-      }
+      if (crawlers[i].update()) active = true;
+      else crawlers.splice(i, 1);
     }
 
-    if (crawlers.length < totalSeedSlots && findAndSpawnFill()) {
-      active = true;
-    }
+    if (crawlers.length < totalSeedSlots && findAndSpawnFill()) active = true;
+    if (crawlers.length) active = true;
 
-    if (crawlers.length > 0) active = true;
-
-    flushStrokeQueues();
-    renderDisplay();
+    flushStrokes();
+    render();
 
     if (!hasRenderedFirstFrame && active) {
       hasRenderedFirstFrame = true;
-      requestAnimationFrame(() => {
+      requestAnimationFrame(() =>
         requestAnimationFrame(() => {
           if (visualState === "hidden" && !isShuttingDown) {
             setVisualState("fading-in");
           }
-        });
-      });
+        })
+      );
     }
 
     if (!active) {
@@ -710,93 +561,78 @@
       autoRegenTimeout = setTimeout(() => {
         if (isShuttingDown) return;
         setVisualState("fading-out");
-        scheduleRegeneration(FADE_DURATION);
-      }, AUTO_REGEN_DELAY);
+        scheduleRegen(FADE_DURATION);
+      }, REGEN_DELAY);
     }
   }
 
   // ===========================================================================
-  // Regeneration scheduling
+  // Scheduling
   // ===========================================================================
 
-  function scheduleRegeneration(delay) {
+  function scheduleRegen(delay) {
     clearTimeout(debounceTimeout);
     clearTimeout(autoRegenTimeout);
-
     debounceTimeout = setTimeout(() => {
       if (isShuttingDown) return;
-
-      if (visualState === "hidden") {
-        startGeneration();
-      } else {
-        const waitForHidden = () => {
-          if (isShuttingDown) return;
-          if (visualState === "hidden") startGeneration();
-          else setTimeout(waitForHidden, 50);
-        };
-        waitForHidden();
-      }
+      if (visualState === "hidden") return startGeneration();
+      const wait = () => {
+        if (isShuttingDown) return;
+        visualState === "hidden" ? startGeneration() : setTimeout(wait, 50);
+      };
+      wait();
     }, delay);
   }
 
-  function triggerRegeneration() {
+  function triggerRegen() {
     clearTimeout(autoRegenTimeout);
     if (visualState === "visible" || visualState === "fading-in") {
       setVisualState("fading-out");
     }
-    scheduleRegeneration(Math.max(RESIZE_DEBOUNCE_TIME, FADE_DURATION));
+    scheduleRegen(Math.max(RESIZE_DEBOUNCE, FADE_DURATION));
   }
 
   // ===========================================================================
-  // Event handlers and observers
+  // Events
   // ===========================================================================
 
   function cleanup() {
     isShuttingDown = true;
-    clearAllTimeouts();
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    resizeObserver.disconnect();
-    themeObserver.disconnect();
+    clearTimeout(debounceTimeout);
+    clearTimeout(autoRegenTimeout);
+    clearTimeout(transitionTimeout);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    resizeObs.disconnect();
+    themeObs.disconnect();
   }
 
-  const resizeObserver = new ResizeObserver(() => {
+  const resizeObs = new ResizeObserver(() => {
     if (isShuttingDown) return;
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    const { clientWidth: w, clientHeight: h } = container;
     if (w === lastWidth && h === lastHeight) return;
     lastWidth = w;
     lastHeight = h;
-    updateCanvasSize();
-    triggerRegeneration();
+    triggerRegen();
   });
 
-  const themeObserver = new MutationObserver((mutations) => {
-    if (isShuttingDown) return;
-    if (mutations.some((m) => m.attributeName === "data-theme")) {
-      triggerRegeneration();
+  const themeObs = new MutationObserver((muts) => {
+    if (!isShuttingDown && muts.some((m) => m.attributeName === "data-theme")) {
+      triggerRegen();
     }
   });
 
   // ===========================================================================
-  // Initialization
+  // Init
   // ===========================================================================
 
-  applyTheme();
-  updateCanvasSize();
+  resizeObs.observe(container);
+  themeObs.observe(document.documentElement, { attributes: true });
 
-  resizeObserver.observe(container);
-  themeObserver.observe(document.documentElement, { attributes: true });
-
-  window.addEventListener("scroll", () => renderDisplay(), { passive: true });
+  window.addEventListener("scroll", render, { passive: true });
   window.addEventListener("pagehide", cleanup);
   window.addEventListener("beforeunload", cleanup);
   document.addEventListener("visibilitychange", () => {
-    if (!isShuttingDown) {
-      isPaused = document.visibilityState === "hidden";
-    }
+    if (!isShuttingDown) isPaused = document.visibilityState === "hidden";
   });
 
   startGeneration();
