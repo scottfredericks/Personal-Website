@@ -10,23 +10,24 @@
   // Grid and rendering parameters
   const CONFIG = {
     gridSize: 30, // Pixels per grid cell
-    strokeWidth: 4, // Line thickness
-    minSegmentLength: 4, // Minimum steps before allowing a turn
-    maxSegmentLength: 12, // Maximum steps before forcing a turn
+    strokeWidth: 3, // Line thickness
+    minSegmentLength: 3, // Minimum steps before allowing a turn
+    maxSegmentLength: 8, // Maximum steps before forcing a turn
     turnProbability: 0.15, // Chance to turn when not forced
     chanceToBranch: 0.08, // Chance to spawn a new crawler at current position
     colorChangeRate: 15, // Steps between color transitions
     growthSpeed: 0.75, // Pixels moved per frame during animation
-    seedDensityArea: 200, // Grid cells per initial crawler
-    tileMultiplier: 9,
-    baseDensityUnit: 9,
+    seedDensityArea: 60, // Grid cells per initial crawler
+    tileMultiplier: 12, // Tile size in grid cells
+    baseDensityUnit: 6,
+    spawnJitter: 0.8, // 0 = periodic grid, 1 = random within cells
   };
 
   // Derived dimensions
   const GRID = CONFIG.baseDensityUnit * CONFIG.tileMultiplier; // Grid cells per tile edge
   const TILE = GRID * CONFIG.gridSize; // Tile size in pixels
-  const GLOW = 25; // Glow effect radius
-  const FADE = 800; // Fade transition duration in ms
+  const GLOW = 12; // Glow effect radius
+  const FADE = 1000; // Fade transition duration in ms
 
   // Theme color schemes
   const PALETTES = {
@@ -454,28 +455,44 @@
     pCtx.fillRect(0, 0, TILE, TILE);
     seedSlots = Math.max(2, Math.floor(GRID * GRID / CONFIG.seedDensityArea));
 
-    // Spawn initial crawlers at random positions
-    for (
-      let n = 0, tries = 0;
-      n < seedSlots && tries < seedSlots * 10;
-      tries++
-    ) {
-      const x = Math.floor(Math.random() * GRID),
-        y = Math.floor(Math.random() * GRID);
-      if (!grid[x][y]) {
-        degrees[x][y] = 1;
-        crawlers.push(
-          new Crawler(
-            x,
-            y,
-            DIR_KEYS[Math.floor(Math.random() * DIR_KEYS.length)],
-            4,
-            Math.floor(Math.random() * palette.colors.length),
-          ),
-        );
-        n++;
+    // Spawn initial crawlers with jittered grid positions
+    const cols = Math.ceil(Math.sqrt(seedSlots));
+    const rows = Math.ceil(seedSlots / cols);
+    const cellW = Math.floor(GRID / cols);
+    const cellH = Math.floor(GRID / rows);
+    const jitter = CONFIG.spawnJitter;
+
+    let n = 0;
+    for (let row = 0; row < rows && n < seedSlots; row++) {
+      for (let col = 0; col < cols && n < seedSlots; col++) {
+        // Center of this grid region
+        const centerX = Math.floor((col + 0.5) * cellW);
+        const centerY = Math.floor((row + 0.5) * cellH);
+
+        // Add random offset scaled by jitter
+        const offsetX = Math.floor((Math.random() - 0.5) * cellW * jitter);
+        const offsetY = Math.floor((Math.random() - 0.5) * cellH * jitter);
+
+        const x = wrap(centerX + offsetX, GRID);
+        const y = wrap(centerY + offsetY, GRID);
+
+        if (!grid[x][y]) {
+          grid[x][y] = true;
+          degrees[x][y] = 1;
+          crawlers.push(
+            new Crawler(
+              x,
+              y,
+              DIR_KEYS[Math.floor(Math.random() * DIR_KEYS.length)],
+              4,
+              Math.floor(Math.random() * palette.colors.length),
+            ),
+          );
+          n++;
+        }
       }
     }
+
     firstFrame = false;
     running = true;
   }
