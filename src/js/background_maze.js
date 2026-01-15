@@ -76,12 +76,7 @@
   let shutdown = false; // Set on page unload to stop all activity
   let firstFrame = false; // Tracks whether we've rendered at least one frame
   let frameId = null; // requestAnimationFrame handle
-  const timeouts = {
-    debounce: null,
-    regen: null,
-    transition: null,
-    resize: null,
-  };
+  const timeouts = { regen: null, transition: null };
 
   // Theme and rendering resources
   let palette = PALETTES.dark;
@@ -128,7 +123,7 @@
   };
 
   // Calculates required canvas dimensions to cover the full document content.
-  // Uses a hidden measurement element to avoid feedback loops where the
+  // Temporarily collapses the container to avoid feedback loops where the
   // container's own height influences the document height calculation.
   function getRequiredDimensions() {
     const width = container.clientWidth;
@@ -560,6 +555,21 @@
     frameId ||= requestAnimationFrame(loop);
   }
 
+  // Initiates fade-out and schedules regeneration for theme changes
+  function trigger() {
+    clearTimeout(timeouts.regen);
+    if (state === "visible" || state === "fading-in") setVisual("fading-out");
+    timeouts.regen = setTimeout(() => {
+      if (shutdown) return;
+      if (state === "hidden") return start();
+
+      // Poll until fade-out completes and we reach hidden state
+      const wait = () =>
+        shutdown || (state === "hidden" ? start() : setTimeout(wait, 50));
+      wait();
+    }, Math.max(300, FADE));
+  }
+
   // Main animation loop
   function loop() {
     if (shutdown) return void (frameId = null);
@@ -599,31 +609,9 @@
       timeouts.regen = setTimeout(() => {
         if (shutdown) return;
         setVisual("fading-out");
-        schedule(FADE);
+        trigger();
       }, 1000);
     }
-  }
-
-  // Schedules a new generation after the specified delay, waiting for hidden state
-  function schedule(delay) {
-    clearTimeout(timeouts.debounce);
-    clearTimeout(timeouts.regen);
-    timeouts.debounce = setTimeout(() => {
-      if (shutdown) return;
-      if (state === "hidden") return start();
-
-      // Poll until fade-out completes and we reach hidden state
-      const wait = () =>
-        shutdown || (state === "hidden" ? start() : setTimeout(wait, 50));
-      wait();
-    }, delay);
-  }
-
-  // Initiates fade-out and schedules regeneration, used for resize and theme changes
-  function trigger() {
-    clearTimeout(timeouts.regen);
-    if (state === "visible" || state === "fading-in") setVisual("fading-out");
-    schedule(Math.max(300, FADE));
   }
 
   // Clears all pending timeouts
@@ -662,68 +650,23 @@
       frameId = null;
     }
     resizeObs.disconnect();
-    mainResizeObs.disconnect();
     themeObs.disconnect();
   }
 
-  // Checks if document dimensions changed and updates canvas accordingly
-  function checkDimensions() {
-    if (shutdown) return;
+  // Handles resize by updating dimensions and re-rendering
+  function handleResize() {
+    if (shutdown || paused) return;
     const { width, height } = getRequiredDimensions();
     if (width !== canvasWidth || height !== canvasHeight) {
-      handleResize(width, height);
+      canvasWidth = width;
+      canvasHeight = height;
+      syncCanvasSize();
+      render();
     }
   }
 
-  // Handles resize by updating cached dimensions and re-rendering
-  function handleResize(width, height) {
-    if (shutdown) return;
-
-    const oldW = canvasWidth;
-    const oldH = canvasHeight;
-    canvasWidth = width;
-    canvasHeight = height;
-
-    // Sync canvas size and re-render immediately to prevent stretching
-    const sizeChanged = syncCanvasSize();
-
-    // Only trigger regeneration if size actually changed significantly
-    if (sizeChanged && (oldW !== width || oldH !== height)) {
-      // Render immediately with current pattern to prevent visual stretching
-      if (running || state !== "hidden") {
-        render();
-      }
-      // Only trigger full regeneration on width change, not height
-      // Height changes just need re-tiling which render() handles
-      if (oldW !== width) {
-        trigger();
-      }
-    }
-  }
-
-  // Debounced dimension check for content size changes
-  function debouncedDimensionCheck() {
-    clearTimeout(timeouts.resize);
-    timeouts.resize = setTimeout(checkDimensions, 100);
-  }
-
-  // Observe container resize for width changes
-  const resizeObs = new ResizeObserver((entries) => {
-    if (shutdown) return;
-    for (const entry of entries) {
-      const { width } = entry.contentRect;
-      if (width > 0) {
-        // Width changed, do a full dimension check
-        checkDimensions();
-      }
-    }
-  });
-
-  // Observe main content for height changes (content changes affecting scroll height)
-  const mainResizeObs = new ResizeObserver(() => {
-    if (shutdown) return;
-    debouncedDimensionCheck();
-  });
+  // Observe container and main content for size changes
+  const resizeObs = new ResizeObserver(() => handleResize());
 
   // Observe theme attribute changes
   const themeObs = new MutationObserver((m) => {
@@ -733,7 +676,7 @@
   // Initialize observers
   resizeObs.observe(container);
   if (main) {
-    mainResizeObs.observe(main);
+    resizeObs.observe(main);
   }
   themeObs.observe(document.documentElement, { attributes: true });
 
@@ -769,7 +712,7 @@
       // Reconnect observers in case they were disconnected
       resizeObs.observe(container);
       if (main) {
-        mainResizeObs.observe(main);
+        resizeObs.observe(main);
       }
       themeObs.observe(document.documentElement, { attributes: true });
 
