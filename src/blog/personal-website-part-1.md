@@ -18,7 +18,13 @@ CSS code, and an AWS S3 bucket with a custom domain name.
 
 Enter: an early version of my personal website:
 
-![Early website version](/img/blog/personal-website-part-1/early_website.png)
+<!-- avif and webp load faster -->
+<picture>
+  <source srcset="/img/blog/personal-website-part-1/early_website.avif" type="image/avif" />
+  <source srcset="/img/blog/personal-website-part-1/early_website.webp" type="image/webp" />
+
+  <img src="/img/blog/personal-website-part-1/early_website.png" alt="Early website version" fetchpriority="high" />
+</picture>
 
 It's okay. It gets the job done, and it shows potential employers that I know
 how to Google things.
