@@ -9,7 +9,7 @@
   background-color: var(--backdrop1);
 }
 
-#background-maze-svg {
+#background-maze-canvas {
   display: block;
   position: absolute;
   top: 0;
@@ -21,7 +21,7 @@
   transition: opacity 0.8s ease;
 }
 
-#background-maze-svg.loaded {
+#background-maze-canvas.loaded {
   opacity: 1;
   transition: opacity 0.8s ease;
 }

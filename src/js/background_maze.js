@@ -12,7 +12,7 @@
     turnProbability: 0.15,
     chanceToBranch: 0.08,
     colorChangeRate: 15,
-    growthSpeed: 0.75,
+    growthSpeed: 1.0,
     seedDensityArea: 200,
     tileMultiplier: 9,
     baseDensityUnit: 9,
@@ -30,6 +30,7 @@
   const RESIZE_DEBOUNCE_TIME = 300;
   const AUTO_REGEN_DELAY = 1000;
   const GLOW_RADIUS = 25;
+  const GLOW_SPRITE_SIZE = GLOW_RADIUS * 2;
 
   const DIRS = {
     N: { x: 0, y: -1 },
@@ -40,20 +41,25 @@
     SE: { x: 1, y: 1 },
   };
 
-  const SVG_NS = "http://www.w3.org/2000/svg";
-
   // ===========================================================================
-  // DOM references and state
+  // Canvas setup
   // ===========================================================================
 
   const container = document.getElementById("background-maze-div");
-  const svg = document.getElementById("background-maze-svg");
+  const displayCanvas = document.getElementById("background-maze-canvas");
+  const displayCtx = displayCanvas.getContext("2d");
 
-  let patternElement = null;
-  let patternBackground = null;
-  let pathElements = [];
-  let glowLayer = null;
-  let glowGradients = [];
+  const patternCanvas = document.createElement("canvas");
+  patternCanvas.width = PATTERN_PIXEL_SIZE;
+  patternCanvas.height = PATTERN_PIXEL_SIZE;
+  const patternCtx = patternCanvas.getContext("2d");
+
+  // Pre-rendered glow sprites, one per palette color
+  let glowSprites = [];
+
+  // ===========================================================================
+  // State management
+  // ===========================================================================
 
   let visualState = "hidden";
   let isRunning = false;
@@ -68,47 +74,28 @@
 
   let currentPalette = PALETTE_DARK;
   let currentBackground = BACKGROUND_DARK;
+  let isLightTheme = false;
 
   let grid = [];
   let degrees = [];
   let colorMap = [];
   let crawlers = [];
   let totalSeedSlots = 0;
-  let pathBuffers = [];
 
   let lastWidth = 0;
   let lastHeight = 0;
+
+  // Stroke queue for batched drawing, indexed by color
+  let strokeQueues = [];
 
   // ===========================================================================
   // Utility functions
   // ===========================================================================
 
-  function createSvgElement(tag, attrs = {}) {
-    const el = document.createElementNS(SVG_NS, tag);
-    for (const [key, value] of Object.entries(attrs)) {
-      el.setAttribute(key, value);
-    }
-    return el;
-  }
-
-  function create2dArray(size, fillValue = false) {
+  function create2dArray(size, fillValue) {
     return Array.from({ length: size }, () => Array(size).fill(fillValue));
   }
 
-  // Calls a function for the primary position and any wrapped positions near pattern edges
-  function forEachWrappedPosition(x, y, buffer, callback) {
-    const w = PATTERN_PIXEL_SIZE;
-    callback(x, y);
-
-    const wrappedX = x > w - buffer ? -w : x < buffer ? w : 0;
-    const wrappedY = y > w - buffer ? -w : y < buffer ? w : 0;
-
-    if (wrappedX !== 0) callback(x + wrappedX, y);
-    if (wrappedY !== 0) callback(x, y + wrappedY);
-    if (wrappedX !== 0 && wrappedY !== 0) callback(x + wrappedX, y + wrappedY);
-  }
-
-  // Check if a diagonal move would cross an existing wall
   function isDiagonalBlocked(x, y, vec) {
     const cols = PATTERN_GRID_SIZE;
     const rows = PATTERN_GRID_SIZE;
@@ -143,85 +130,35 @@
   }
 
   // ===========================================================================
-  // SVG structure initialization
+  // Glow sprite generation
   // ===========================================================================
 
-  function initializeSvgStructure() {
-    svg.innerHTML = "";
+  function createGlowSprite(color) {
+    const canvas = document.createElement("canvas");
+    canvas.width = GLOW_SPRITE_SIZE;
+    canvas.height = GLOW_SPRITE_SIZE;
+    const ctx = canvas.getContext("2d");
 
-    const defsElement = createSvgElement("defs");
-    svg.appendChild(defsElement);
+    const cx = GLOW_RADIUS;
+    const cy = GLOW_RADIUS;
 
-    glowGradients = currentPalette.map((color, i) => {
-      const gradient = createSvgElement("radialGradient", {
-        id: `maze-glow-gradient-${i}`,
-      });
-      updateGlowGradient(gradient, color);
-      defsElement.appendChild(gradient);
-      return gradient;
-    });
-
-    patternElement = createSvgElement("pattern", {
-      id: "maze-pattern",
-      patternUnits: "userSpaceOnUse",
-      width: PATTERN_PIXEL_SIZE,
-      height: PATTERN_PIXEL_SIZE,
-    });
-    defsElement.appendChild(patternElement);
-
-    patternBackground = createSvgElement("rect", {
-      width: "100%",
-      height: "100%",
-      fill: currentBackground,
-    });
-    patternElement.appendChild(patternBackground);
-
-    const pathGroup = createSvgElement("g", { id: "maze-paths" });
-    patternElement.appendChild(pathGroup);
-
-    pathElements = currentPalette.map((color, i) => {
-      const path = createSvgElement("path", {
-        id: `maze-path-${i}`,
-        stroke: color,
-        "stroke-width": CONFIG.strokeWidth,
-        "stroke-linecap": "round",
-        "stroke-linejoin": "round",
-        fill: "none",
-        d: "",
-      });
-      pathGroup.appendChild(path);
-      return path;
-    });
-
-    glowLayer = createSvgElement("g", { id: "maze-glow-layer" });
-    patternElement.appendChild(glowLayer);
-
-    svg.appendChild(
-      createSvgElement("rect", {
-        id: "maze-fill",
-        width: "100%",
-        height: "100%",
-        fill: "url(#maze-pattern)",
-      }),
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, GLOW_RADIUS);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(
+      1,
+      isLightTheme ? "rgba(255,255,255,0)" : "rgba(0,0,0,0)",
     );
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, GLOW_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
   }
 
-  function updateGlowGradient(gradient, color) {
-    gradient.innerHTML = "";
-    gradient.appendChild(
-      createSvgElement("stop", {
-        offset: "0%",
-        "stop-color": color,
-        "stop-opacity": "0.8",
-      }),
-    );
-    gradient.appendChild(
-      createSvgElement("stop", {
-        offset: "100%",
-        "stop-color": color,
-        "stop-opacity": "0",
-      }),
-    );
+  function regenerateGlowSprites() {
+    glowSprites = currentPalette.map((color) => createGlowSprite(color));
   }
 
   // ===========================================================================
@@ -229,18 +166,11 @@
   // ===========================================================================
 
   function applyTheme() {
-    const isLight =
+    isLightTheme =
       document.documentElement.getAttribute("data-theme") === "light";
-    currentPalette = isLight ? PALETTE_LIGHT : PALETTE_DARK;
-    currentBackground = isLight ? BACKGROUND_LIGHT : BACKGROUND_DARK;
-
-    if (patternBackground) {
-      patternBackground.setAttribute("fill", currentBackground);
-    }
-    pathElements.forEach((el, i) =>
-      el.setAttribute("stroke", currentPalette[i])
-    );
-    glowGradients.forEach((g, i) => updateGlowGradient(g, currentPalette[i]));
+    currentPalette = isLightTheme ? PALETTE_LIGHT : PALETTE_DARK;
+    currentBackground = isLightTheme ? BACKGROUND_LIGHT : BACKGROUND_DARK;
+    regenerateGlowSprites();
   }
 
   // ===========================================================================
@@ -254,12 +184,26 @@
     visualState = newState;
 
     if (newState === "fading-out" || newState === "fading-in") {
-      svg.classList.toggle("loaded", newState === "fading-in");
+      displayCanvas.classList.toggle("loaded", newState === "fading-in");
       const nextState = newState === "fading-in" ? "visible" : "hidden";
       transitionTimeout = setTimeout(
         () => setVisualState(nextState),
         FADE_DURATION,
       );
+    }
+  }
+
+  // ===========================================================================
+  // Canvas sizing
+  // ===========================================================================
+
+  function updateCanvasSize() {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    if (displayCanvas.width !== w || displayCanvas.height !== h) {
+      displayCanvas.width = w;
+      displayCanvas.height = h;
     }
   }
 
@@ -400,7 +344,7 @@
         reached = false;
       }
 
-      this.accumulatePathSegment(this.animX, this.animY, nextX, nextY);
+      this.queueStroke(this.animX, this.animY, nextX, nextY);
       this.animX = nextX;
       this.animY = nextY;
 
@@ -415,15 +359,10 @@
       return true;
     }
 
-    accumulatePathSegment(x1, y1, x2, y2) {
-      const buffer = CONFIG.strokeWidth * 2;
-      const addSegment = (ax, ay, bx, by) => {
-        pathBuffers[this.colorIdx] += `M${ax.toFixed(1)},${ay.toFixed(1)}L${
-          bx.toFixed(1)
-        },${by.toFixed(1)}`;
-      };
-
+    queueStroke(x1, y1, x2, y2) {
       const w = PATTERN_PIXEL_SIZE;
+      const buffer = CONFIG.strokeWidth * 2;
+
       const wrappedX = Math.max(x1, x2) > w - buffer
         ? -w
         : Math.min(x1, x2) < buffer
@@ -435,11 +374,31 @@
         ? w
         : 0;
 
-      addSegment(x1, y1, x2, y2);
-      if (wrappedX !== 0) addSegment(x1 + wrappedX, y1, x2 + wrappedX, y2);
-      if (wrappedY !== 0) addSegment(x1, y1 + wrappedY, x2, y2 + wrappedY);
+      strokeQueues[this.colorIdx].push({ x1, y1, x2, y2 });
+
+      if (wrappedX !== 0) {
+        strokeQueues[this.colorIdx].push({
+          x1: x1 + wrappedX,
+          y1,
+          x2: x2 + wrappedX,
+          y2,
+        });
+      }
+      if (wrappedY !== 0) {
+        strokeQueues[this.colorIdx].push({
+          x1,
+          y1: y1 + wrappedY,
+          x2,
+          y2: y2 + wrappedY,
+        });
+      }
       if (wrappedX !== 0 && wrappedY !== 0) {
-        addSegment(x1 + wrappedX, y1 + wrappedY, x2 + wrappedX, y2 + wrappedY);
+        strokeQueues[this.colorIdx].push({
+          x1: x1 + wrappedX,
+          y1: y1 + wrappedY,
+          x2: x2 + wrappedX,
+          y2: y2 + wrappedY,
+        });
       }
     }
 
@@ -487,9 +446,7 @@
 
   function findAndSpawnFill() {
     const lockedCells = new Set(
-      crawlers
-        .filter((c) => c.state === "MOVING")
-        .map((c) => `${c.x},${c.y}`),
+      crawlers.filter((c) => c.state === "MOVING").map((c) => `${c.x},${c.y}`),
     );
 
     const candidates = [];
@@ -549,45 +506,93 @@
   // Rendering
   // ===========================================================================
 
-  function updateGlowEffects() {
-    glowLayer.innerHTML = "";
-    if (crawlers.length === 0) return;
+  function flushStrokeQueues() {
+    patternCtx.lineWidth = CONFIG.strokeWidth;
+    patternCtx.lineCap = "round";
+    patternCtx.lineJoin = "round";
 
-    for (const crawler of crawlers) {
-      forEachWrappedPosition(
-        crawler.animX,
-        crawler.animY,
-        GLOW_RADIUS,
-        (cx, cy) => {
-          glowLayer.appendChild(
-            createSvgElement("circle", {
-              cx,
-              cy,
-              r: GLOW_RADIUS,
-              fill: `url(#maze-glow-gradient-${crawler.colorIdx})`,
-            }),
-          );
-        },
-      );
+    for (let i = 0; i < strokeQueues.length; i++) {
+      const queue = strokeQueues[i];
+      if (queue.length === 0) continue;
+
+      patternCtx.strokeStyle = currentPalette[i];
+      patternCtx.beginPath();
+
+      for (const s of queue) {
+        patternCtx.moveTo(s.x1, s.y1);
+        patternCtx.lineTo(s.x2, s.y2);
+      }
+
+      patternCtx.stroke();
+      strokeQueues[i] = [];
     }
   }
 
-  function flushPathBuffers() {
-    for (let i = 0; i < pathBuffers.length; i++) {
-      if (pathBuffers[i].length > 0) {
-        pathElements[i].setAttribute(
-          "d",
-          (pathElements[i].getAttribute("d") || "") + pathBuffers[i],
+  function renderDisplay() {
+    const w = displayCanvas.width;
+    const h = displayCanvas.height;
+    const scrollOffset = window.scrollY % PATTERN_PIXEL_SIZE;
+
+    // Clear and draw tiled pattern
+    displayCtx.fillStyle = currentBackground;
+    displayCtx.fillRect(0, 0, w, h);
+
+    const cols = Math.ceil(w / PATTERN_PIXEL_SIZE) + 1;
+    const rows = Math.ceil(h / PATTERN_PIXEL_SIZE) + 1;
+
+    for (let col = 0; col < cols; col++) {
+      for (let row = 0; row < rows; row++) {
+        displayCtx.drawImage(
+          patternCanvas,
+          col * PATTERN_PIXEL_SIZE,
+          row * PATTERN_PIXEL_SIZE - scrollOffset,
         );
-        pathBuffers[i] = "";
       }
     }
+
+    // Draw glow effects
+    renderGlowEffects(scrollOffset);
   }
 
-  function updatePatternScroll() {
-    if (!patternElement) return;
-    const offset = -(window.scrollY % PATTERN_PIXEL_SIZE);
-    patternElement.setAttribute("patternTransform", `translate(0, ${offset})`);
+  function renderGlowEffects(scrollOffset) {
+    if (crawlers.length === 0) return;
+
+    const w = displayCanvas.width;
+    const h = displayCanvas.height;
+    const patSize = PATTERN_PIXEL_SIZE;
+
+    const cols = Math.ceil(w / patSize) + 1;
+    const rows = Math.ceil(h / patSize) + 1;
+
+    displayCtx.globalCompositeOperation = isLightTheme
+      ? "source-over"
+      : "screen";
+
+    for (let col = 0; col < cols; col++) {
+      for (let row = 0; row < rows; row++) {
+        const ox = col * patSize;
+        const oy = row * patSize - scrollOffset;
+
+        for (const crawler of crawlers) {
+          const cx = ox + crawler.animX - GLOW_RADIUS;
+          const cy = oy + crawler.animY - GLOW_RADIUS;
+
+          // Skip if completely outside viewport
+          if (
+            cx + GLOW_SPRITE_SIZE < 0 ||
+            cx > w ||
+            cy + GLOW_SPRITE_SIZE < 0 ||
+            cy > h
+          ) {
+            continue;
+          }
+
+          displayCtx.drawImage(glowSprites[crawler.colorIdx], cx, cy);
+        }
+      }
+    }
+
+    displayCtx.globalCompositeOperation = "source-over";
   }
 
   // ===========================================================================
@@ -600,10 +605,11 @@
     grid = create2dArray(size, false);
     degrees = create2dArray(size, 0);
     colorMap = create2dArray(size, 0);
-    pathBuffers = Array(currentPalette.length).fill("");
+    strokeQueues = currentPalette.map(() => []);
 
-    pathElements.forEach((el) => el.setAttribute("d", ""));
-    glowLayer.innerHTML = "";
+    // Clear pattern canvas
+    patternCtx.fillStyle = currentBackground;
+    patternCtx.fillRect(0, 0, PATTERN_PIXEL_SIZE, PATTERN_PIXEL_SIZE);
 
     crawlers = [];
     const numSeeds = Math.max(
@@ -643,8 +649,8 @@
   function startGeneration() {
     if (isShuttingDown) return;
     applyTheme();
+    updateCanvasSize();
     initializeGeneration();
-    updatePatternScroll();
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(animationLoop);
     }
@@ -665,7 +671,7 @@
     if (isPaused) return;
 
     if (!isRunning) {
-      updateGlowEffects();
+      renderDisplay();
       return;
     }
 
@@ -685,8 +691,8 @@
 
     if (crawlers.length > 0) active = true;
 
-    flushPathBuffers();
-    updateGlowEffects();
+    flushStrokeQueues();
+    renderDisplay();
 
     if (!hasRenderedFirstFrame && active) {
       hasRenderedFirstFrame = true;
@@ -763,6 +769,7 @@
     if (w === lastWidth && h === lastHeight) return;
     lastWidth = w;
     lastHeight = h;
+    updateCanvasSize();
     triggerRegeneration();
   });
 
@@ -778,12 +785,12 @@
   // ===========================================================================
 
   applyTheme();
-  initializeSvgStructure();
+  updateCanvasSize();
 
   resizeObserver.observe(container);
   themeObserver.observe(document.documentElement, { attributes: true });
 
-  window.addEventListener("scroll", updatePatternScroll, { passive: true });
+  window.addEventListener("scroll", () => renderDisplay(), { passive: true });
   window.addEventListener("pagehide", cleanup);
   window.addEventListener("beforeunload", cleanup);
   document.addEventListener("visibilitychange", () => {
