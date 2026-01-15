@@ -20,6 +20,7 @@ const site = lume({
 site.add([".css"]);
 site.add([".js"]);
 site.add([".svg"]);
+site.add("/fonts");
 site.add("/img");
 
 site.use(date());
