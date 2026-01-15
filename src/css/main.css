@@ -171,4 +171,5 @@ section.contact ul {
 
 section.contact ul li {
   display: block;
+  padding-bottom: 0.6rem;
 }
