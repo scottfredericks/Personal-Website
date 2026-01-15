@@ -55,8 +55,8 @@
   let patternBackground = null;
   let pathGroup = null;
   let pathElements = [];
-  let fillRect = null;
   let glowLayer = null;
+  let fillRect = null;
   let glowGradients = [];
 
   // ===========================================================================
@@ -147,6 +147,11 @@
       pathElements.push(path);
     }
 
+    // Glow layer inside pattern, rendered on top of paths
+    glowLayer = document.createElementNS(SVG_NS, "g");
+    glowLayer.setAttribute("id", "maze-glow-layer");
+    patternElement.appendChild(glowLayer);
+
     // Full viewport rectangle that uses the pattern
     fillRect = document.createElementNS(SVG_NS, "rect");
     fillRect.setAttribute("id", "maze-fill");
@@ -154,11 +159,6 @@
     fillRect.setAttribute("height", "100%");
     fillRect.setAttribute("fill", "url(#maze-pattern)");
     svg.appendChild(fillRect);
-
-    // Layer for glow effects, rendered on top of the tiled pattern
-    glowLayer = document.createElementNS(SVG_NS, "g");
-    glowLayer.setAttribute("id", "maze-glow-layer");
-    svg.appendChild(glowLayer);
   }
 
   function updateGlowGradient(gradient, color) {
@@ -612,50 +612,60 @@
   // ===========================================================================
 
   function updateGlowEffects() {
-    // Clear existing glow circles
     glowLayer.innerHTML = "";
 
     if (crawlers.length === 0) return;
 
-    // Calculate viewport dimensions and tiling
-    const viewportWidth = container.clientWidth;
-    const viewportHeight = container.clientHeight;
-    const scrollY = window.scrollY;
-    const offsetY = -(scrollY % PATTERN_PIXEL_SIZE);
+    const w = PATTERN_PIXEL_SIZE;
+    const buffer = GLOW_RADIUS;
 
-    const cols = Math.ceil(viewportWidth / PATTERN_PIXEL_SIZE) + 1;
-    const rows = Math.ceil(viewportHeight / PATTERN_PIXEL_SIZE) + 2;
+    for (const crawler of crawlers) {
+      // Create primary glow circle at crawler position
+      const circle = document.createElementNS(SVG_NS, "circle");
+      circle.setAttribute("cx", crawler.animX);
+      circle.setAttribute("cy", crawler.animY);
+      circle.setAttribute("r", GLOW_RADIUS);
+      circle.setAttribute(
+        "fill",
+        `url(#maze-glow-gradient-${crawler.colorIdx})`,
+      );
+      glowLayer.appendChild(circle);
 
-    // Create glow circles for each crawler head across all visible tiles
-    for (let col = 0; col < cols; col++) {
-      for (let row = 0; row < rows; row++) {
-        const ox = col * PATTERN_PIXEL_SIZE;
-        const oy = row * PATTERN_PIXEL_SIZE + offsetY - PATTERN_PIXEL_SIZE;
+      // Handle wrap-around by creating duplicate glow circles at pattern edges
+      let wrappedX = 0;
+      let wrappedY = 0;
 
-        for (const crawler of crawlers) {
-          const cx = ox + crawler.animX;
-          const cy = oy + crawler.animY;
+      if (crawler.animX > w - buffer) wrappedX = -w;
+      else if (crawler.animX < buffer) wrappedX = w;
 
-          // Skip if outside visible area with buffer
-          if (
-            cx < -GLOW_RADIUS ||
-            cx > viewportWidth + GLOW_RADIUS ||
-            cy < -GLOW_RADIUS ||
-            cy > viewportHeight + GLOW_RADIUS
-          ) {
-            continue;
-          }
+      if (crawler.animY > w - buffer) wrappedY = -w;
+      else if (crawler.animY < buffer) wrappedY = w;
 
-          const circle = document.createElementNS(SVG_NS, "circle");
-          circle.setAttribute("cx", cx);
-          circle.setAttribute("cy", cy);
-          circle.setAttribute("r", GLOW_RADIUS);
-          circle.setAttribute(
-            "fill",
-            `url(#maze-glow-gradient-${crawler.colorIdx})`,
-          );
-          glowLayer.appendChild(circle);
-        }
+      if (wrappedX !== 0) {
+        const c = document.createElementNS(SVG_NS, "circle");
+        c.setAttribute("cx", crawler.animX + wrappedX);
+        c.setAttribute("cy", crawler.animY);
+        c.setAttribute("r", GLOW_RADIUS);
+        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
+        glowLayer.appendChild(c);
+      }
+
+      if (wrappedY !== 0) {
+        const c = document.createElementNS(SVG_NS, "circle");
+        c.setAttribute("cx", crawler.animX);
+        c.setAttribute("cy", crawler.animY + wrappedY);
+        c.setAttribute("r", GLOW_RADIUS);
+        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
+        glowLayer.appendChild(c);
+      }
+
+      if (wrappedX !== 0 && wrappedY !== 0) {
+        const c = document.createElementNS(SVG_NS, "circle");
+        c.setAttribute("cx", crawler.animX + wrappedX);
+        c.setAttribute("cy", crawler.animY + wrappedY);
+        c.setAttribute("r", GLOW_RADIUS);
+        c.setAttribute("fill", `url(#maze-glow-gradient-${crawler.colorIdx})`);
+        glowLayer.appendChild(c);
       }
     }
   }
@@ -757,9 +767,6 @@
 
     // Skip updates if paused but keep loop running
     if (isPaused) return;
-
-    // Update scroll position for pattern
-    updatePatternScroll();
 
     if (!isRunning) {
       updateGlowEffects();
