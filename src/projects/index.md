@@ -79,7 +79,7 @@ Doing this for [molecular crystals](https://en.wikipedia.org/wiki/Molecular_soli
 
 _**Tech**: Rust, Macroquad, C++, SDL, Lua, Love2D_
 
-![2D wave equation simulation](/img/projects/wave.gif)
+![2D wave equation simulation](/img/projects/wave.gif){ loading="lazy" }
 
 The [wave equation](https://en.wikipedia.org/wiki/Wave_equation) is one of the most fundamental equations in physics and mathematics. It describes how disturbances (aka "waves") move through a medium (like water, solid material, or space itself). In other words, if you "shake" something, the wave equation tells you how the resulting waves move around. This gives a good first-order approximation for many real-world phenomena, including light and radio waves, sound, and ocean waves.
 
@@ -111,7 +111,7 @@ One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wik
 
 _**Tech**: Lua, Love2D_
 
-![PongLove2D screen capture](/img/projects/pong_love2d.gif){: style="max-width: 40%;" }
+![PongLove2D screen capture](/img/projects/pong_love2d.gif){ loading="lazy" style="max-width: 40%;" }
 
 A simple Pong clone, but with gravity whose direction changes over time. Created using Lua and [Love2D](https://love2d.org/). Uses the mouse for control and has 8-bit sound effects generated using [jsfxr](https://sfxr.me/) and [LMMS](https://lmms.io/).
 
