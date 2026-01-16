@@ -63,7 +63,7 @@ This project was my introduction to published academic research, version control
 
 <details>
 
-<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
+<summary><h3 style="display: inline-block;">Expand for Details</h3></summary>
 
 Crystals are materials that consist of the same pattern of atoms repeated throughout 3D space, on a grid of boxes called unit cells. To describe a specific crystal structure, you just need to define the size and shape of the unit cell, plus the type and positions of atoms within the cell. In practice, most crystals have additional symmetry, for example rotation or reflection. This symmetry is described using a branch of mathematics called [group theory](https://en.wikipedia.org/wiki/Group_theory), and it turns out there are 230 distinct [space groups](https://en.wikipedia.org/wiki/Space_group) that a crystal structure might fall into.
 
@@ -93,7 +93,7 @@ I've revisited this simulation several times to explore different languages and 
 
 <details>
 
-<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
+<summary><h3 style="display: inline-block;">Expand for Details</h3></summary>
 
 Simulating the wave equation works by splitting space up into a grid of tiny cells. You define the value of the field (the quantity you care about, like height, pressure, etc.) at each cell, as well as how quickly the value is changing there (the "velocity"). Then you start moving forward in time by small steps. For every time step, at each cell, you update the field value using the velocity, and you update the velocity using the acceleration.
 
