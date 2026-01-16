@@ -11,7 +11,7 @@ Below are selected projects from my professional and independent work, roughly i
 
 _**Tech**: Python, JavaScript, gRPC, pytest, industrial protocols_
 
-As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test unintended interactions between features.
+As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together, running across both desktop devices and proprietary touchscreen hardware. This split of responsibilities made it challenging to test unintended interactions between features.
 
 As a complement to unit and integration tests, I developed an end-to-end test framework that ran projects on real devices and collected the execution results. This involved:
 
@@ -25,13 +25,13 @@ By making the project and test generation scriptable, we were able to cover a la
 
 ## Automated Cross-Platform Packaging (CIMON)
 
-_**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic_
+_**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic, WiX Toolset, pkgbuild_
 
-Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats ([WiX Toolset](https://www.firegiant.com/wixtoolset/) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuild](https://manp.gs/mac/1/productbuild) for macOS), they require fragile, single-use commands that are difficult to maintain as the project structure changes.
+Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats, they require fragile, single-use commands that are difficult to maintain as the project structure changes.
 
-To automate the process, I developed an internal Python library to collect the binaries for each application, perform transformations, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
+To automate the process, I developed an internal Python library to collect the binaries, package them into installers, and upload them for public use. For each release, we only needed to update a single config file with the version string for each component.
 
-A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, component name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
 
 Other features included postinstall scripts, S3 upload/download, multi-language translation support, and automated Apple code signing.
 
