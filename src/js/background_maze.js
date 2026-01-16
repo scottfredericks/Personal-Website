@@ -1,10 +1,13 @@
-// deno-lint-ignore-file no-window-prefix no-window
+// deno-lint-ignore-file no-window no-window-prefix
 
 // Animated maze background generator
 //
 // Creates a continuously generating maze pattern that tiles seamlessly across the viewport.
 // Crawlers traverse a grid, drawing strokes that accumulate on a pattern canvas. The pattern
 // is then tiled across the display canvas with glow effects rendered at crawler head positions.
+// The canvas is fixed-position and viewport-sized. During generation, tiles are rendered based
+// on scroll position. After generation completes, a GPU-efficient pattern fill is used and
+// the animation loop stops entirely.
 
 (function () {
   // Grid and rendering parameters
@@ -54,7 +57,7 @@
   const DIR_ENTRIES = Object.entries(DIRS);
   const DIR_VECS = Object.values(DIRS);
 
-  // Canvas setup: display canvas is visible and viewport-sized, pattern canvas is offscreen
+  // Canvas setup: display canvas is viewport-sized, pattern canvas is offscreen
   const container = document.getElementById("background-maze-div");
   const display = document.getElementById("background-maze-canvas");
   const dCtx = display.getContext("2d");
@@ -66,12 +69,15 @@
 
   // Visual and generation state
   let state = "hidden"; // Visual state: hidden, fading-in, visible, fading-out
-  let running = false; // Whether crawlers are actively generating
   let paused = false; // Paused when tab is not visible
   let shutdown = false; // Set on page unload to stop all activity
   let firstFrame = false; // Tracks whether we've rendered at least one frame
   let frameId = null; // requestAnimationFrame handle
-  const timeouts = { debounce: null, regen: null, transition: null };
+  let staticMode = false; // True when generation complete and using pattern fill
+  let cachedPattern = null; // CanvasPattern for efficient static rendering
+  let lastScrollY = -1; // Track scroll position to detect changes
+  let generation = 0; // Increments on each new maze to invalidate stale callbacks
+  const timeouts = { regen: null, transition: null };
 
   // Theme and rendering resources
   let palette = PALETTES.dark;
@@ -79,7 +85,10 @@
 
   // Generation state, reset on each new maze
   let grid, degrees, colorMap, crawlers, strokes, seedSlots;
-  let lastW = 0, lastH = 0; // Tracks container size to detect resize
+
+  // Cached canvas dimensions
+  let canvasWidth = 0;
+  let canvasHeight = 0;
 
   // Wraps a value into the range [0, m) handling negative values
   const wrap = (v, m) => (v % m + m) % m;
@@ -103,22 +112,35 @@
       return true;
     }).map(([k]) => k);
 
-  // Iterates over tile positions needed to cover the display, accounting for scroll offset
+  // Iterates over tile positions needed to cover the viewport, accounting for scroll offset
   const forTiles = (fn) => {
-    const off = window.scrollY % TILE;
-    for (let c = 0; c <= display.width / TILE + 1; c++) {
-      for (let r = 0; r <= display.height / TILE + 1; r++) {
-        fn(c * TILE, r * TILE - off);
+    const scrollOffset = wrap(window.scrollY, TILE);
+    const cols = Math.ceil(canvasWidth / TILE) + 1;
+    const rows = Math.ceil(canvasHeight / TILE) + 2; // Extra row for scroll coverage
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        fn(c * TILE, r * TILE - scrollOffset);
       }
     }
   };
 
-  // Updates canvas pixel dimensions to match container size, preventing CSS scaling
+  // Updates canvas pixel dimensions to match viewport
   function syncCanvasSize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    if (display.width !== w) display.width = w;
-    if (display.height !== h) display.height = h;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    if (width <= 0 || height <= 0) return false;
+    let changed = false;
+    if (canvasWidth !== width) {
+      canvasWidth = width;
+      display.width = width;
+      changed = true;
+    }
+    if (canvasHeight !== height) {
+      canvasHeight = height;
+      display.height = height;
+      changed = true;
+    }
+    return changed;
   }
 
   // Updates palette and regenerates glow sprites for the current theme
@@ -142,6 +164,9 @@
       x.fill();
       return c;
     });
+
+    // Invalidate cached pattern when theme changes
+    cachedPattern = null;
   }
 
   // Transitions the visual state, managing CSS class and scheduling next state
@@ -415,13 +440,14 @@
     });
   }
 
-  // Composites the tiled pattern and glow effects onto the display canvas
-  function render() {
-    syncCanvasSize();
+  // Renders the maze during active generation using manual tiling
+  function renderActive() {
+    if (canvasWidth <= 0 || canvasHeight <= 0) return;
 
     dCtx.fillStyle = palette.bg;
-    dCtx.fillRect(0, 0, display.width, display.height);
+    dCtx.fillRect(0, 0, canvasWidth, canvasHeight);
     forTiles((x, y) => dCtx.drawImage(pattern, x, y));
+
     if (!crawlers.length) return;
 
     // Glow uses screen blend on dark theme for additive light effect
@@ -432,8 +458,8 @@
       crawlers.forEach((c) => {
         const x = ox + c.ax - GLOW, y = oy + c.ay - GLOW;
         if (
-          x > -GLOW * 2 && x < display.width && y > -GLOW * 2 &&
-          y < display.height
+          x > -GLOW * 2 && x < canvasWidth && y > -GLOW * 2 &&
+          y < canvasHeight
         ) {
           dCtx.drawImage(glowSprites[c.color], x, y);
         }
@@ -442,8 +468,69 @@
     dCtx.globalCompositeOperation = "source-over";
   }
 
+  // Renders the maze in static mode using GPU-efficient pattern fill
+  function renderStatic() {
+    if (canvasWidth <= 0 || canvasHeight <= 0) return;
+
+    // Create cached pattern if needed
+    if (!cachedPattern) {
+      cachedPattern = dCtx.createPattern(pattern, "repeat");
+    }
+
+    // Calculate scroll offset for pattern alignment
+    const scrollOffset = wrap(window.scrollY, TILE);
+
+    // Use pattern fill with transform for scroll offset
+    dCtx.save();
+    dCtx.translate(0, -scrollOffset);
+    dCtx.fillStyle = cachedPattern;
+    dCtx.fillRect(0, scrollOffset, canvasWidth, canvasHeight);
+    dCtx.restore();
+  }
+
+  // Handles scroll events in static mode
+  function onScroll() {
+    if (shutdown || paused || !staticMode) return;
+
+    // Only re-render if scroll position actually changed
+    const currentScrollY = window.scrollY;
+    if (currentScrollY !== lastScrollY) {
+      lastScrollY = currentScrollY;
+      renderStatic();
+    }
+  }
+
+  // Enters static mode after generation completes
+  function enterStaticMode() {
+    staticMode = true;
+    lastScrollY = window.scrollY;
+
+    // Stop the animation loop
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+
+    // Do one final render with the pattern
+    renderStatic();
+
+    // Listen for scroll to update pattern position
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  // Exits static mode when regeneration is needed
+  function exitStaticMode() {
+    if (!staticMode) return;
+    staticMode = false;
+    cachedPattern = null;
+    window.removeEventListener("scroll", onScroll);
+  }
+
   // Resets all generation state for a new maze
   function init() {
+    exitStaticMode();
+    generation++;
+
     const make = (v) => Array.from({ length: GRID }, () => Array(GRID).fill(v));
     grid = make(false); // Tracks which cells are occupied
     degrees = make(0); // Connection count per cell (for limiting junctions)
@@ -494,7 +581,6 @@
     }
 
     firstFrame = false;
-    running = true;
   }
 
   // Entry point for starting or restarting generation
@@ -506,14 +592,31 @@
     frameId ||= requestAnimationFrame(loop);
   }
 
-  // Main animation loop
+  // Initiates fade-out and schedules regeneration for theme changes
+  function trigger() {
+    clearTimeout(timeouts.regen);
+    if (state === "visible" || state === "fading-in") setVisual("fading-out");
+
+    const expectedGeneration = generation;
+    timeouts.regen = setTimeout(() => {
+      if (shutdown || generation !== expectedGeneration) return;
+      if (state === "hidden") return start();
+
+      // Poll until fade-out completes and we reach hidden state
+      const wait = () => {
+        if (shutdown || generation !== expectedGeneration) return;
+        if (state === "hidden") return start();
+        setTimeout(wait, 50);
+      };
+      wait();
+    }, Math.max(300, FADE));
+  }
+
+  // Main animation loop - only runs during active generation
   function loop() {
     if (shutdown) return void (frameId = null);
     frameId = requestAnimationFrame(loop);
     if (paused) return;
-
-    // When not running, just render the static completed maze
-    if (!running) return render();
 
     // Update all crawlers, removing dead ones
     let active = crawlers.length > 0;
@@ -525,7 +628,7 @@
     if (crawlers.length < seedSlots && spawnFill()) active = true;
 
     flush();
-    render();
+    renderActive();
 
     // Trigger fade-in after first successful render.
     // Double requestAnimationFrame ensures the browser has
@@ -539,75 +642,130 @@
       );
     }
 
-    // Schedule regeneration when maze completes
+    // Generation complete - switch to static mode
     if (!active && !crawlers.length) {
-      running = false;
+      enterStaticMode();
+
+      // Schedule regeneration after delay
+      const expectedGeneration = generation;
       timeouts.regen = setTimeout(() => {
-        if (shutdown) return;
+        if (shutdown || generation !== expectedGeneration) return;
         setVisual("fading-out");
-        schedule(FADE);
+        trigger();
       }, 1000);
     }
   }
 
-  // Schedules a new generation after the specified delay, waiting for hidden state
-  function schedule(delay) {
-    clearTimeout(timeouts.debounce);
-    clearTimeout(timeouts.regen);
-    timeouts.debounce = setTimeout(() => {
-      if (shutdown) return;
-      if (state === "hidden") return start();
-
-      // Poll until fade-out completes and we reach hidden state
-      const wait = () =>
-        shutdown || (state === "hidden" ? start() : setTimeout(wait, 50));
-      wait();
-    }, delay);
-  }
-
-  // Initiates fade-out and schedules regeneration, used for resize and theme changes
-  function trigger() {
-    clearTimeout(timeouts.regen);
-    if (state === "visible" || state === "fading-in") setVisual("fading-out");
-    schedule(Math.max(300, FADE));
-  }
-
-  // Cleanup on page unload
-  const cleanup = () => {
-    shutdown = true;
+  // Clears all pending timeouts
+  function clearAllTimeouts() {
     Object.values(timeouts).forEach(clearTimeout);
-    frameId && cancelAnimationFrame(frameId);
+  }
+
+  // Pauses activity when page is hidden, used for bfcache compatibility
+  function pause() {
+    paused = true;
+    clearAllTimeouts();
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+  }
+
+  // Resumes activity, reinitializing state if needed
+  function resume() {
+    paused = false;
+    syncCanvasSize();
+
+    if (staticMode) {
+      // In static mode, just re-render
+      renderStatic();
+    } else {
+      // Restart animation loop
+      frameId ||= requestAnimationFrame(loop);
+    }
+  }
+
+  // Full cleanup for permanent page unload
+  function cleanup() {
+    shutdown = true;
+    clearAllTimeouts();
+    exitStaticMode();
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
     resizeObs.disconnect();
     themeObs.disconnect();
-  };
+  }
 
-  // Observe container resize to trigger regeneration
-  const resizeObs = new ResizeObserver(() => {
-    if (shutdown) return;
-    const { clientWidth: w, clientHeight: h } = container;
-    if (w !== lastW || h !== lastH) {
-      lastW = w;
-      lastH = h;
-      syncCanvasSize();
-      trigger();
+  // Handles resize by updating dimensions and re-rendering
+  function handleResize() {
+    if (shutdown || paused) return;
+    if (syncCanvasSize()) {
+      // Invalidate cached pattern on resize
+      cachedPattern = null;
+      if (staticMode) {
+        renderStatic();
+      } else {
+        renderActive();
+      }
     }
-  });
+  }
+
+  // Observe container for size changes
+  const resizeObs = new ResizeObserver(() => handleResize());
 
   // Observe theme attribute changes
   const themeObs = new MutationObserver((m) => {
     if (!shutdown && m.some((x) => x.attributeName === "data-theme")) trigger();
   });
 
-  // Initialize observers and event listeners
+  // Initialize observers
   resizeObs.observe(container);
   themeObs.observe(document.documentElement, { attributes: true });
-  window.addEventListener("scroll", render, { passive: true });
-  window.addEventListener("pagehide", cleanup);
-  window.addEventListener("beforeunload", cleanup);
-  document.addEventListener(
-    "visibilitychange",
-    () => !shutdown && (paused = document.visibilityState === "hidden"),
-  );
 
+  // Handle page visibility changes for tab switching
+  document.addEventListener("visibilitychange", () => {
+    if (shutdown) return;
+    if (document.visibilityState === "hidden") {
+      pause();
+    } else {
+      resume();
+    }
+  });
+
+  // Handle bfcache: pagehide fires when navigating away
+  window.addEventListener("pagehide", (event) => {
+    if (event.persisted) {
+      // Page is being cached, just pause without full cleanup
+      pause();
+    } else {
+      // Page is being discarded, do full cleanup
+      cleanup();
+    }
+  });
+
+  // Handle bfcache: pageshow fires when page is shown, including from cache
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) {
+      // Page was restored from bfcache, reset state and restart
+      shutdown = false;
+      state = "hidden";
+      staticMode = false;
+      cachedPattern = null;
+      display.classList.remove("loaded");
+
+      // Reconnect observers in case they were disconnected
+      resizeObs.observe(container);
+      themeObs.observe(document.documentElement, { attributes: true });
+
+      // Get fresh dimensions and restart
+      syncCanvasSize();
+      start();
+    }
+  });
+
+  // Initial setup
+  syncCanvasSize();
   start();
 })();

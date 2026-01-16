@@ -11,7 +11,7 @@ Below are selected projects from my professional and independent work, roughly i
 
 _**Tech**: Python, JavaScript, gRPC, pytest, industrial protocols_
 
-As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together: a designer program to create user-defined projects with custom scripts, a graphical runtime to display the projects and process user interactions, and a communication gateway for sharing tag values with other devices using industrial protocols. The designer ran on desktop, while everything else ran on proprietary touchscreen devices using a custom Linux distribution. This split of responsibilities made it challenging to test unintended interactions between features.
+As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together, running across both desktop devices and proprietary touchscreen hardware. This split of responsibilities made it challenging to test unintended interactions between features.
 
 As a complement to unit and integration tests, I developed an end-to-end test framework that ran projects on real devices and collected the execution results. This involved:
 
@@ -25,13 +25,13 @@ By making the project and test generation scriptable, we were able to cover a la
 
 ## Automated Cross-Platform Packaging (CIMON)
 
-_**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic_
+_**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic, WiX Toolset, pkgbuild_
 
-Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats ([WiX Toolset](https://www.firegiant.com/wixtoolset/) for Windows and [pkgbuild](https://manp.gs/mac/1/pkgbuild) and [productbuild](https://manp.gs/mac/1/productbuild) for macOS), they require fragile, single-use commands that are difficult to maintain as the project structure changes.
+Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats, they require fragile, single-use commands that are difficult to maintain as the project structure changes.
 
-To automate the process, I developed an internal Python library to collect the binaries for each application, perform transformations, set installer variables like strings and images, and generate and upload the installer files for each platform. For each release, we only needed to update a single config file with the version string for each component.
+To automate the process, I developed an internal Python library to collect the binaries, package them into installers, and upload them for public use. For each release, we only needed to update a single config file with the version string for each component.
 
-A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, component name, version number, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
 
 Other features included postinstall scripts, S3 upload/download, multi-language translation support, and automated Apple code signing.
 
@@ -41,7 +41,7 @@ _**Tech**: HTML, CSS, JavaScript, Lume, AWS S3_
 
 ![Personal website logo](/img/sflogo.svg){: style="max-width: 15%;" }
 
-This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code on GitHub [here](https://github.com/scottfredericks/Personal-Website).
+This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code [on GitHub](https://github.com/scottfredericks/Personal-Website).
 
 Hosting is provided by [GitHub Pages](https://docs.github.com/en/pages). Older versions used an [AWS S3](https://aws.amazon.com/s3/) bucket.
 
@@ -63,7 +63,7 @@ This project was my introduction to published academic research, version control
 
 <details>
 
-<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
+<summary><h3 style="display: inline-block;">Expand for Details</h3></summary>
 
 Crystals are materials that consist of the same pattern of atoms repeated throughout 3D space, on a grid of boxes called unit cells. To describe a specific crystal structure, you just need to define the size and shape of the unit cell, plus the type and positions of atoms within the cell. In practice, most crystals have additional symmetry, for example rotation or reflection. This symmetry is described using a branch of mathematics called [group theory](https://en.wikipedia.org/wiki/Group_theory), and it turns out there are 230 distinct [space groups](https://en.wikipedia.org/wiki/Space_group) that a crystal structure might fall into.
 
@@ -79,7 +79,7 @@ Doing this for [molecular crystals](https://en.wikipedia.org/wiki/Molecular_soli
 
 _**Tech**: Rust, Macroquad, C++, SDL, Lua, Love2D_
 
-![2D wave equation simulation](/img/projects/wave.gif)
+![2D wave equation simulation](/img/projects/wave.gif){ loading="lazy" }
 
 The [wave equation](https://en.wikipedia.org/wiki/Wave_equation) is one of the most fundamental equations in physics and mathematics. It describes how disturbances (aka "waves") move through a medium (like water, solid material, or space itself). In other words, if you "shake" something, the wave equation tells you how the resulting waves move around. This gives a good first-order approximation for many real-world phenomena, including light and radio waves, sound, and ocean waves.
 
@@ -93,7 +93,7 @@ I've revisited this simulation several times to explore different languages and 
 
 <details>
 
-<summary><h3 style="display: inline-block;">Technical Details (Click to Expand)</h3></summary>
+<summary><h3 style="display: inline-block;">Expand for Details</h3></summary>
 
 Simulating the wave equation works by splitting space up into a grid of tiny cells. You define the value of the field (the quantity you care about, like height, pressure, etc.) at each cell, as well as how quickly the value is changing there (the "velocity"). Then you start moving forward in time by small steps. For every time step, at each cell, you update the field value using the velocity, and you update the velocity using the acceleration.
 
@@ -111,7 +111,7 @@ One big challenge is ensuring [numerical stability](https://en.wikipedia.org/wik
 
 _**Tech**: Lua, Love2D_
 
-![PongLove2D screen capture](/img/projects/pong_love2d.gif){: style="max-width: 40%;" }
+![PongLove2D screen capture](/img/projects/pong_love2d.gif){ loading="lazy" style="max-width: 40%;" }
 
 A simple Pong clone, but with gravity whose direction changes over time. Created using Lua and [Love2D](https://love2d.org/). Uses the mouse for control and has 8-bit sound effects generated using [jsfxr](https://sfxr.me/) and [LMMS](https://lmms.io/).
 

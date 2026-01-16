@@ -43,15 +43,40 @@ keywords: "Scott Fredericks, Dev Portfolio, Software Engineer, Programmer, Devel
     <meta name="theme-color" content="#090d40">
 
     <!-- Main stylesheet -->
-    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href="/css/main.css" inline />
 
-    <!-- Lato font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Proload regular Lato font -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap"
-      rel="stylesheet"
-    >
+      rel="preload"
+      href="/fonts/lato-regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <link
+      rel="preload"
+      href="/fonts/lato-bold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <link
+      rel="preload"
+      href="/fonts/lato-italic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <link
+      rel="preload"
+      href="/fonts/lato-bold-italic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
 
     <!-- Knowledge graph info -->
     <script type="application/ld+json">
@@ -68,25 +93,15 @@ keywords: "Scott Fredericks, Dev Portfolio, Software Engineer, Programmer, Devel
       }
     </script>
 
-    <!-- Theme detection script -->
-    <script>
-      // Immediately check local storage
-      (function () {
-        const savedTheme = localStorage.getItem("theme");
-        // Only apply 'light' if specifically saved.
-        // Otherwise, we do nothing, which defaults to ':root' (Dark).
-        if (savedTheme === "light") {
-          document.documentElement.setAttribute("data-theme", "light");
-        }
-      })();
-    </script>
+    <!-- Theme detection script, must be run before loading page content-->
+    <script src="/js/theme-load.js" inline></script>
   </head>
   <body>
     {{ include "components/background_maze.html.vto" }}
     {{ include "components/navbar.html.vto" }}
     <main>
       {{ content }}
-      <script src="/js/theme-toggle.js"></script>
+      <script src="/js/theme-toggle.js" inline></script>
     </main>
   </body>
 </html>

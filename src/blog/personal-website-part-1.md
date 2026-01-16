@@ -9,7 +9,7 @@ tags: [blog_article]
 _Good to know before reading: basic HTML/CSS, running shell commands, editing files_
 
 _You can check out the source code for this website
-[here](https://github.com/scottfredericks/Personal-Website)._
+[on GitHub](https://github.com/scottfredericks/Personal-Website)._
 
 The situation: It was the middle of the Covid lockdown. I had some free time,
 and I knew enough HTML, CSS, and JavaScript to cobble a few pages together and
@@ -18,7 +18,13 @@ CSS code, and an AWS S3 bucket with a custom domain name.
 
 Enter: an early version of my personal website:
 
-![Early website version](/img/blog/personal-website-part-1/early_website.png)
+<!-- avif and webp load faster -->
+<picture>
+  <source srcset="/img/blog/personal-website-part-1/early_website.avif" type="image/avif" />
+  <source srcset="/img/blog/personal-website-part-1/early_website.webp" type="image/webp" />
+
+  <img src="/img/blog/personal-website-part-1/early_website.png" alt="Early website version" fetchpriority="high" />
+</picture>
 
 It's okay. It gets the job done, and it shows potential employers that I know
 how to Google things.
@@ -129,7 +135,7 @@ that we'll explain later.
 
 Now I'll set some default configurations for our Lume project. This is all
 handled in `_config.ts`, which is documented
-[here](https://lume.land/docs/configuration/config-file/).
+[in the Lume docs](https://lume.land/docs/configuration/config-file/).
 
 There are three things we care about for now:
 
