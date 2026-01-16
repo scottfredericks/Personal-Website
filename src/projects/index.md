@@ -5,35 +5,40 @@ url: /projects/
 
 # Projects
 
-Below are selected projects from my professional and independent work, roughly in reverse chronological order.{: style="text-align: center;"}
+A selection of professional and independent work, spanning multiple fields.{: style="text-align: center;"}
 
-## Automated Test Project Generation and Deployment (CIMON)
+## End-to-End Test Automation Framework
 
 _**Tech**: Python, JavaScript, gRPC, pytest, industrial protocols_
 
-As a test engineer at CIMON, I was responsible for the full test suite for [Canvas](https://www.cimon.com/software/canvas), a set of software for CIMON's eXT and eXT2 industrial touchscreens. This software consisted of multiple applications working together, running across both desktop devices and proprietary touchscreen hardware. This split of responsibilities made it challenging to test unintended interactions between features.
+Testing the [Canvas](https://www.cimon.com/software/canvas) software suite at [CIMON](https://www.cimon.com/) required validating complex interactions across desktop environments and proprietary industrial hardware.
 
-As a complement to unit and integration tests, I developed an end-to-end test framework that ran projects on real devices and collected the execution results. This involved:
+To bridge the gap between unit tests and real-world usage, I engineered a Python-based end-to-end test framework to run projects on real devices and collect the execution results. This involved:
 
-- a Python library to generate project files based on the schema
+<!-- - a Python library to generate project files based on the schema
 - JavaScript injection for execution-time logic and function-level testing
 - real-time tag-based communication using various industrial protocols
 - gRPC for deployment
-- pytest for final collection and reporting
+- pytest for final collection and reporting -->
 
-By making the project and test generation scriptable, we were able to cover a large number of complex test cases using a relatively small testing code base.
+- **Schema-Based Generation**: A Python library to generate complex project files dynamically.
+- **Runtime Logic**: JavaScript injection for function-level validation.
+- **Hardware Communication**: Real-time interactions using various industrial protocols.
+- **Automated Reporting**: Integrated `pytest` for collection and analysis.
 
-## Automated Cross-Platform Packaging (CIMON)
+<!-- By making the project and test generation scriptable, we were able to cover a large number of complex test cases using a relatively small testing code base. -->
+
+## Automated Cross-Platform Packaging
 
 _**Tech**: Python, AWS S3, MSI, pkg, Bash, Visual Basic, WiX Toolset, pkgbuild_
 
-Another responsibility at CIMON was packaging our software into MSI (Windows) and pkg (macOS) installer files for public deployment. While CLI tools exist to generate these formats, they require fragile, single-use commands that are difficult to maintain as the project structure changes.
+Deployment for [Canvas](https://www.cimon.com/software/canvas) required MSI (Windows) and pkg (macOS) installers. Existing CLI tools used fragile commands that were difficult to maintain across project changes.
 
-To automate the process, I developed an internal Python library to collect the binaries, package them into installers, and upload them for public use. For each release, we only needed to update a single config file with the version string for each component.
+To solve this, I developed an internal Python library to automate the release pipeline. The system collected the binaries, packaged them into installers, and uploaded them for public use. This simplified the basic release workflow to specifying the version for each component.
 
-A key feature was the ability to define custom logic for each component using standard Python files. This made it straightforward to edit specific files based on the platform, brand (for white label support), language, and other variables. Resources could also be included conditionally based on a specialized folder naming scheme.
+A key feature was the ability to define custom logic for each component using standard Python code. This made it easy to modify specific files conditionally based on the platform, language, build flags, and other variables.
 
-Other features included postinstall scripts, S3 upload/download, multi-language translation support, and automated Apple code signing.
+Other features included white label branding support, S3 upload/download, multi-language translation, and automated Apple code signing.
 
 ## Personal Website
 
@@ -55,11 +60,11 @@ _**Tech**: Python, NumPy, unittest, Sphinx, Slurm_
 
 ![PyXtal logo](/img/projects/pyxtal_logo.png){: style="background:white;" }
 
-[PyXtal](https://github.com/MaterSim/PyXtal) is an open-source Python library for [crystal structure prediction](https://en.wikipedia.org/wiki/Crystal_structure_prediction). It introduced a novel algorithm for generating molecular crystal structures with user-defined symmetry constraints. It is available for installation via `pip` on [PyPi](https://pypi.org/project/pyxtal/).
+[PyXtal](https://github.com/MaterSim/PyXtal) is an open-source Python library for [crystal structure prediction](https://en.wikipedia.org/wiki/Crystal_structure_prediction). It introduced a novel algorithm for generating molecular crystal structures with user-defined symmetry constraints. It was created in collaboration with [Dr. Qiang Zhu](https://qzhu2017.github.io/) for my masters thesis, and is now maintained by his research group. The library is available for installation via `pip` on [PyPi](https://pypi.org/project/pyxtal/).
 
-The work was published in ScienceDirect: ["PyXtal: A Python library for crystal structure generation and symmetry analysis"](https://doi.org/10.1016/j.cpc.2020.107810).
+The research was peer-reviewed and published in ScienceDirect: ["PyXtal: A Python library for crystal structure generation and symmetry analysis"](https://doi.org/10.1016/j.cpc.2020.107810).
 
-This project was my introduction to published academic research, version control, issue tracking, packaging, unit testing, and automated documentation (see the [readthedocs](https://pyxtal.readthedocs.io/en/latest/)). It was created in collaboration with [Dr. Qiang Zhu](https://qzhu2017.github.io/) for my masters thesis, and is now maintained by his research group.
+This project served as my transition from academic research to software engineering. Beyond the core algorithms, I established the project's development standards, including version control, unit testing, package distribution (`PyPi`), and automated documentation.
 
 <details>
 
@@ -85,7 +90,7 @@ The [wave equation](https://en.wikipedia.org/wiki/Wave_equation) is one of the m
 
 The wave equation is also well-suited for numerical simulation, and is a good starting point for learning computational physics.
 
-I've revisited this simulation several times to explore different languages and rendering approaches:
+I've revisited this simulation several times with different languages and graphics frameworks to compare their performance:
 
 - a [2D version](https://github.com/scottfredericks/rust-wave-2d) using Rust and [Macroquad](https://macroquad.rs/)
 - a [2D version](https://github.com/scottfredericks/Wave2D) using C++ and [SDL](https://www.libsdl.org/)
@@ -113,6 +118,6 @@ _**Tech**: Lua, Love2D_
 
 ![PongLove2D screen capture](/img/projects/pong_love2d.gif){ loading="lazy" style="max-width: 40%;" }
 
-A simple Pong clone, but with gravity whose direction changes over time. Created using Lua and [Love2D](https://love2d.org/). Uses the mouse for control and has 8-bit sound effects generated using [jsfxr](https://sfxr.me/) and [LMMS](https://lmms.io/).
+A physics-based Pong clone with a gravity vector that changes over time. Created using Lua and [Love2D](https://love2d.org/). Uses the mouse for control and has 8-bit sound effects generated using [jsfxr](https://sfxr.me/) and [LMMS](https://lmms.io/).
 
 You can play on Windows by cloning or downloading the [GitHub repo](https://github.com/scottfredericks/PongLove2D) and running the `exe` file.
