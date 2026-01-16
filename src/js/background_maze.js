@@ -2,11 +2,12 @@
 
 // Animated maze background generator
 //
-// Creates a continuously generating maze pattern that tiles seamlessly across the page.
+// Creates a continuously generating maze pattern that tiles seamlessly across the viewport.
 // Crawlers traverse a grid, drawing strokes that accumulate on a pattern canvas. The pattern
 // is then tiled across the display canvas with glow effects rendered at crawler head positions.
-// The canvas is absolutely positioned and sized to cover the full document, allowing native
-// browser scrolling without JavaScript intervention.
+// The canvas is fixed-position and viewport-sized. During generation, tiles are rendered based
+// on scroll position. After generation completes, a GPU-efficient pattern fill is used and
+// the animation loop stops entirely.
 
 (function () {
   // Grid and rendering parameters
@@ -56,7 +57,7 @@
   const DIR_ENTRIES = Object.entries(DIRS);
   const DIR_VECS = Object.values(DIRS);
 
-  // Canvas setup: display canvas covers full document, pattern canvas is offscreen
+  // Canvas setup: display canvas is viewport-sized, pattern canvas is offscreen
   const container = document.getElementById("background-maze-div");
   const display = document.getElementById("background-maze-canvas");
   const dCtx = display.getContext("2d");
@@ -66,16 +67,16 @@
   });
   const pCtx = pattern.getContext("2d");
 
-  // Reference to main content element for height calculation
-  const main = document.querySelector("main");
-
   // Visual and generation state
   let state = "hidden"; // Visual state: hidden, fading-in, visible, fading-out
-  let running = false; // Whether crawlers are actively generating
   let paused = false; // Paused when tab is not visible
   let shutdown = false; // Set on page unload to stop all activity
   let firstFrame = false; // Tracks whether we've rendered at least one frame
   let frameId = null; // requestAnimationFrame handle
+  let staticMode = false; // True when generation complete and using pattern fill
+  let cachedPattern = null; // CanvasPattern for efficient static rendering
+  let lastScrollY = -1; // Track scroll position to detect changes
+  let generation = 0; // Increments on each new maze to invalidate stale callbacks
   const timeouts = { regen: null, transition: null };
 
   // Theme and rendering resources
@@ -85,7 +86,7 @@
   // Generation state, reset on each new maze
   let grid, degrees, colorMap, crawlers, strokes, seedSlots;
 
-  // Cached dimensions to avoid forced reflows
+  // Cached canvas dimensions
   let canvasWidth = 0;
   let canvasHeight = 0;
 
@@ -111,61 +112,33 @@
       return true;
     }).map(([k]) => k);
 
-  // Iterates over tile positions needed to cover the entire canvas
+  // Iterates over tile positions needed to cover the viewport, accounting for scroll offset
   const forTiles = (fn) => {
+    const scrollOffset = wrap(window.scrollY, TILE);
     const cols = Math.ceil(canvasWidth / TILE) + 1;
-    const rows = Math.ceil(canvasHeight / TILE) + 1;
+    const rows = Math.ceil(canvasHeight / TILE) + 2; // Extra row for scroll coverage
     for (let c = 0; c < cols; c++) {
       for (let r = 0; r < rows; r++) {
-        fn(c * TILE, r * TILE);
+        fn(c * TILE, r * TILE - scrollOffset);
       }
     }
   };
 
-  // Calculates required canvas dimensions to cover the full document content.
-  // Temporarily collapses the container to avoid feedback loops where the
-  // container's own height influences the document height calculation.
-  function getRequiredDimensions() {
-    const width = container.clientWidth;
-    const navbarHeight = container.offsetTop;
-    const viewportContentHeight = window.innerHeight - navbarHeight;
-
-    // Temporarily collapse container to measure true content height
-    const prevHeight = container.style.height;
-    container.style.height = "0px";
-
-    // Measure the actual document content height without our container's contribution
-    const docScrollHeight = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight,
-    );
-
-    // Restore container height
-    container.style.height = prevHeight;
-
-    // Calculate height needed: document content height minus navbar,
-    // but at minimum the viewport height minus navbar
-    const contentHeight = docScrollHeight - navbarHeight;
-    const height = Math.max(viewportContentHeight, contentHeight);
-
-    return { width, height };
-  }
-
-  // Updates canvas pixel dimensions to cover the full scrollable area
+  // Updates canvas pixel dimensions to match viewport
   function syncCanvasSize() {
-    if (canvasWidth <= 0 || canvasHeight <= 0) return false;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    if (width <= 0 || height <= 0) return false;
     let changed = false;
-    if (display.width !== canvasWidth) {
-      display.width = canvasWidth;
+    if (canvasWidth !== width) {
+      canvasWidth = width;
+      display.width = width;
       changed = true;
     }
-    if (display.height !== canvasHeight) {
-      display.height = canvasHeight;
+    if (canvasHeight !== height) {
+      canvasHeight = height;
+      display.height = height;
       changed = true;
-    }
-    // Update container height to match canvas
-    if (changed) {
-      container.style.height = canvasHeight + "px";
     }
     return changed;
   }
@@ -191,6 +164,9 @@
       x.fill();
       return c;
     });
+
+    // Invalidate cached pattern when theme changes
+    cachedPattern = null;
   }
 
   // Transitions the visual state, managing CSS class and scheduling next state
@@ -464,13 +440,14 @@
     });
   }
 
-  // Composites the tiled pattern and glow effects onto the display canvas
-  function render() {
+  // Renders the maze during active generation using manual tiling
+  function renderActive() {
     if (canvasWidth <= 0 || canvasHeight <= 0) return;
 
     dCtx.fillStyle = palette.bg;
-    dCtx.fillRect(0, 0, display.width, display.height);
+    dCtx.fillRect(0, 0, canvasWidth, canvasHeight);
     forTiles((x, y) => dCtx.drawImage(pattern, x, y));
+
     if (!crawlers.length) return;
 
     // Glow uses screen blend on dark theme for additive light effect
@@ -491,8 +468,69 @@
     dCtx.globalCompositeOperation = "source-over";
   }
 
+  // Renders the maze in static mode using GPU-efficient pattern fill
+  function renderStatic() {
+    if (canvasWidth <= 0 || canvasHeight <= 0) return;
+
+    // Create cached pattern if needed
+    if (!cachedPattern) {
+      cachedPattern = dCtx.createPattern(pattern, "repeat");
+    }
+
+    // Calculate scroll offset for pattern alignment
+    const scrollOffset = wrap(window.scrollY, TILE);
+
+    // Use pattern fill with transform for scroll offset
+    dCtx.save();
+    dCtx.translate(0, -scrollOffset);
+    dCtx.fillStyle = cachedPattern;
+    dCtx.fillRect(0, scrollOffset, canvasWidth, canvasHeight);
+    dCtx.restore();
+  }
+
+  // Handles scroll events in static mode
+  function onScroll() {
+    if (shutdown || paused || !staticMode) return;
+
+    // Only re-render if scroll position actually changed
+    const currentScrollY = window.scrollY;
+    if (currentScrollY !== lastScrollY) {
+      lastScrollY = currentScrollY;
+      renderStatic();
+    }
+  }
+
+  // Enters static mode after generation completes
+  function enterStaticMode() {
+    staticMode = true;
+    lastScrollY = window.scrollY;
+
+    // Stop the animation loop
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+
+    // Do one final render with the pattern
+    renderStatic();
+
+    // Listen for scroll to update pattern position
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  // Exits static mode when regeneration is needed
+  function exitStaticMode() {
+    if (!staticMode) return;
+    staticMode = false;
+    cachedPattern = null;
+    window.removeEventListener("scroll", onScroll);
+  }
+
   // Resets all generation state for a new maze
   function init() {
+    exitStaticMode();
+    generation++;
+
     const make = (v) => Array.from({ length: GRID }, () => Array(GRID).fill(v));
     grid = make(false); // Tracks which cells are occupied
     degrees = make(0); // Connection count per cell (for limiting junctions)
@@ -543,7 +581,6 @@
     }
 
     firstFrame = false;
-    running = true;
   }
 
   // Entry point for starting or restarting generation
@@ -559,25 +596,27 @@
   function trigger() {
     clearTimeout(timeouts.regen);
     if (state === "visible" || state === "fading-in") setVisual("fading-out");
+
+    const expectedGeneration = generation;
     timeouts.regen = setTimeout(() => {
-      if (shutdown) return;
+      if (shutdown || generation !== expectedGeneration) return;
       if (state === "hidden") return start();
 
       // Poll until fade-out completes and we reach hidden state
-      const wait = () =>
-        shutdown || (state === "hidden" ? start() : setTimeout(wait, 50));
+      const wait = () => {
+        if (shutdown || generation !== expectedGeneration) return;
+        if (state === "hidden") return start();
+        setTimeout(wait, 50);
+      };
       wait();
     }, Math.max(300, FADE));
   }
 
-  // Main animation loop
+  // Main animation loop - only runs during active generation
   function loop() {
     if (shutdown) return void (frameId = null);
     frameId = requestAnimationFrame(loop);
     if (paused) return;
-
-    // When not running, just render the static completed maze
-    if (!running) return render();
 
     // Update all crawlers, removing dead ones
     let active = crawlers.length > 0;
@@ -589,7 +628,7 @@
     if (crawlers.length < seedSlots && spawnFill()) active = true;
 
     flush();
-    render();
+    renderActive();
 
     // Trigger fade-in after first successful render.
     // Double requestAnimationFrame ensures the browser has
@@ -603,11 +642,14 @@
       );
     }
 
-    // Schedule regeneration when maze completes
+    // Generation complete - switch to static mode
     if (!active && !crawlers.length) {
-      running = false;
+      enterStaticMode();
+
+      // Schedule regeneration after delay
+      const expectedGeneration = generation;
       timeouts.regen = setTimeout(() => {
-        if (shutdown) return;
+        if (shutdown || generation !== expectedGeneration) return;
         setVisual("fading-out");
         trigger();
       }, 1000);
@@ -632,19 +674,22 @@
   // Resumes activity, reinitializing state if needed
   function resume() {
     paused = false;
-    // Recalculate dimensions in case they changed while paused
-    const { width, height } = getRequiredDimensions();
-    canvasWidth = width;
-    canvasHeight = height;
     syncCanvasSize();
-    // Restart animation loop
-    frameId ||= requestAnimationFrame(loop);
+
+    if (staticMode) {
+      // In static mode, just re-render
+      renderStatic();
+    } else {
+      // Restart animation loop
+      frameId ||= requestAnimationFrame(loop);
+    }
   }
 
   // Full cleanup for permanent page unload
   function cleanup() {
     shutdown = true;
     clearAllTimeouts();
+    exitStaticMode();
     if (frameId) {
       cancelAnimationFrame(frameId);
       frameId = null;
@@ -656,16 +701,18 @@
   // Handles resize by updating dimensions and re-rendering
   function handleResize() {
     if (shutdown || paused) return;
-    const { width, height } = getRequiredDimensions();
-    if (width !== canvasWidth || height !== canvasHeight) {
-      canvasWidth = width;
-      canvasHeight = height;
-      syncCanvasSize();
-      render();
+    if (syncCanvasSize()) {
+      // Invalidate cached pattern on resize
+      cachedPattern = null;
+      if (staticMode) {
+        renderStatic();
+      } else {
+        renderActive();
+      }
     }
   }
 
-  // Observe container and main content for size changes
+  // Observe container for size changes
   const resizeObs = new ResizeObserver(() => handleResize());
 
   // Observe theme attribute changes
@@ -675,9 +722,6 @@
 
   // Initialize observers
   resizeObs.observe(container);
-  if (main) {
-    resizeObs.observe(main);
-  }
   themeObs.observe(document.documentElement, { attributes: true });
 
   // Handle page visibility changes for tab switching
@@ -707,28 +751,21 @@
       // Page was restored from bfcache, reset state and restart
       shutdown = false;
       state = "hidden";
+      staticMode = false;
+      cachedPattern = null;
       display.classList.remove("loaded");
 
       // Reconnect observers in case they were disconnected
       resizeObs.observe(container);
-      if (main) {
-        resizeObs.observe(main);
-      }
       themeObs.observe(document.documentElement, { attributes: true });
 
       // Get fresh dimensions and restart
-      const { width, height } = getRequiredDimensions();
-      canvasWidth = width;
-      canvasHeight = height;
-
+      syncCanvasSize();
       start();
     }
   });
 
-  // Initial dimension capture
-  const initialDims = getRequiredDimensions();
-  canvasWidth = initialDims.width;
-  canvasHeight = initialDims.height;
-
+  // Initial setup
+  syncCanvasSize();
   start();
 })();

@@ -1,13 +1,12 @@
 #background-maze-div {
-  position: absolute;
+  position: fixed;
   top: var(--navbar-height);
   left: 0;
   width: 100%;
-  min-height: calc(100vh - var(--navbar-height));
+  height: calc(100vh - var(--navbar-height));
   z-index: -1;
   overflow: hidden;
   background-color: var(--backdrop1);
-  will-change: contents;
 }
 
 #background-maze-canvas {
