@@ -10,7 +10,7 @@ title: About Me
 
 </section>
 
-<section class="approach">
+<section class="approach highlight-strong">
 
 ## My Approach
 
