@@ -41,7 +41,7 @@ _**Tech**: HTML, CSS, JavaScript, Lume, AWS S3_
 
 ![Personal website logo](/img/sflogo.svg){: style="max-width: 15%;" }
 
-This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code on GitHub [here](https://github.com/scottfredericks/Personal-Website).
+This website was created using the static site generator [Lume](https://lume.land/) with custom HTML, CSS, and JavaScript. You can find the source code [on GitHub](https://github.com/scottfredericks/Personal-Website).
 
 Hosting is provided by [GitHub Pages](https://docs.github.com/en/pages). Older versions used an [AWS S3](https://aws.amazon.com/s3/) bucket.
 

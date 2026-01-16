@@ -9,7 +9,7 @@ tags: [blog_article]
 _Good to know before reading: basic HTML/CSS, running shell commands, editing files_
 
 _You can check out the source code for this website
-[here](https://github.com/scottfredericks/Personal-Website)._
+[on GitHub](https://github.com/scottfredericks/Personal-Website)._
 
 The situation: It was the middle of the Covid lockdown. I had some free time,
 and I knew enough HTML, CSS, and JavaScript to cobble a few pages together and
@@ -135,7 +135,7 @@ that we'll explain later.
 
 Now I'll set some default configurations for our Lume project. This is all
 handled in `_config.ts`, which is documented
-[here](https://lume.land/docs/configuration/config-file/).
+[in the Lume docs](https://lume.land/docs/configuration/config-file/).
 
 There are three things we care about for now:
 

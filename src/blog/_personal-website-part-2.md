@@ -9,7 +9,7 @@ tags: [blog_article]
 _Good to know before reading: basic HTML/CSS, basic JavaScript, editing files_
 
 _You can check out the source code for this website
-[here](https://github.com/scottfredericks/Personal-Website)._
+[on GitHub](https://github.com/scottfredericks/Personal-Website)._
 
 ## Inspiration
 
