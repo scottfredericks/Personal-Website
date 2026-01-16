@@ -13,7 +13,7 @@ _You can check out the source code for this website
 
 The situation: It was the middle of the Covid lockdown. I had some free time,
 and I knew enough HTML, CSS, and JavaScript to cobble a few pages together and
-to list "HTML/CSS/JavaScript" on my resume. I had some functional
+list "HTML/CSS/JavaScript" on my resume. I had some functional
 CSS code, and an AWS S3 bucket with a custom domain name.
 
 Enter: an early version of my personal website:
@@ -139,8 +139,8 @@ handled in `_config.ts`, which is documented
 
 There are three things we care about for now:
 
-- Adding a `src` directory so that only files included there get output to the
-  build. We don't want to include the outer README.md or other top-level files
+- Adding a `src` directory so that Lume only looks for source files there.
+  We don't want to include the outer README.md or other top-level files
   in the build, since those have other purposes within the repo.
 - Having the server open a browser by default when we run `lume -s`.
 - Disabling the
@@ -247,8 +247,9 @@ and looks like this in the browser:
 
 ![Markdown conversion](/img/blog/personal-website-part-1/markdown_conversion.png)
 
-Great, our offline website works! But it's very ugly. We should add some CSS to make it less ugly.
-But before we can do that, we need to understand how Lume handles layouts,
+Great, our offline website works! However, it's pretty ugly. We should add some CSS to make it less ugly.
+
+Before we can do that, we need to understand how Lume handles layouts,
 templates, and other resources. This is because in Lume, CSS files are handled like any other resource.
 
 ### Applying a Layout
@@ -416,7 +417,7 @@ h1 {
 }
 ```
 
-and not
+and not something like:
 
 ```css
 # {
@@ -462,12 +463,13 @@ Then, we can add images within `md` files using the following syntax:
 ![alt text](/img/filename.png)
 ```
 
-Here, we expect an image to exist at `src/img/filename.png`. Note the `/` at the beginning of the file path, which is necessary to reference the output root (the `_site`
-folder). We can also specify custom
+This will insert an `<img>` tag into the output HTML using a relative URL.
+
+Here, we expect an image to exist at `src/img/filename.png`. Note the `/` at the
+beginning of the file path, which is necessary to reference the website root
+(for our local build, that means the `_site` folder). We can also specify custom
 [alt text](https://www.w3schools.com/tags/att_img_alt.asp), which is used in the
 event that the image does not load correctly.
-
-This will insert an `<img>` tag into the output HTML using a relative URL.
 
 ### Adding Blog Articles Programmatically
 
