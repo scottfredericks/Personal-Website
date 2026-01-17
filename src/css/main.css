@@ -60,6 +60,8 @@
 :root {
   --navbar-height: 65px;
 
+  color-scheme: dark;
+
   --background1: #02020d;
   --background2: #03051a;
   --background3: #090d40;
@@ -78,6 +80,7 @@
 
 /* Dark theme override */
 [data-theme="light"] {
+  color-scheme: light;
   --background1: #f7efe2;
   --background2: #fae5b1;
   --background3: #eec67c;
@@ -118,12 +121,11 @@ body {
 main {
   position: relative;
   z-index: 2; /* Sits above the fixed canvas */
-  width: 95%;
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  /* padding: 75px 100px; */
-  padding-left: 75px;
-  padding-right: 75px;
+  padding-left: 50px;
+  padding-right: 50px;
   padding-bottom: 75px;
   padding-top: 50px;
   margin-top: -20px;
@@ -141,8 +143,8 @@ main {
   --mask-horiz: linear-gradient(
     to right,
     transparent 0px,
-    black 30px,
-    black calc(100% - 30px),
+    black 20px,
+    black calc(100% - 20px),
     transparent 100%
   );
 
@@ -242,6 +244,9 @@ section.contact ul li {
 
 @media (max-width: 768px) {
   main {
-    padding: 3rem 1.5rem;
+    padding-left: 35px;
+    padding-right: 35px;
+    padding-bottom: 75px;
+    padding-top: 50px;
   }
 }

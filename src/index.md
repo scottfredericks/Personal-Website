@@ -1,5 +1,6 @@
 ---
 title: About Me
+url: /
 ---
 
 # Hi! I'm Scott Fredericks
@@ -36,7 +37,7 @@ My main interest is foundational theory, particularly in geometric approaches to
 
 ### Education
 
-I actively teach and mentor others. Through my [blog](/blog) and other content, I aim to visualize complex ideas and make their core concepts accessible to everyone.
+I enjoy teaching and mentoring others. Through my [blog](/blog) and other content, I aim to visualize complex ideas and make their core concepts accessible to everyone.
 
 ### Game Dev
 
