@@ -1,5 +1,6 @@
 ---
 title: About Me
+url: /
 ---
 
 # Hi! I'm Scott Fredericks
