@@ -1,3 +1,8 @@
+/* Apply border-box to every element universally */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -6,7 +11,7 @@ html, body {
 }
 
 body {
-  /* This pushes the actual content (text) down so it isn't hidden by the navbar */
+  /* Push the main content down so it isn't hidden by the navbar */
   padding-top: var(--navbar-height);
 }
 
@@ -19,7 +24,7 @@ body {
   z-index: 1000;
   background-color: var(--background2);
 
-  /* Crucial: Allows the mobile menu to display below the container */
+  /* Allow the mobile menu to display below the container */
   overflow: visible;
 }
 
@@ -127,6 +132,10 @@ body {
 
 /* Mobile styling */
 @media (max-width: 768px) {
+  .nav-content {
+    padding: 0 1rem;
+  }
+
   .hamburger {
     display: flex;
   }
@@ -165,7 +174,7 @@ body {
     width: 100%;
   }
 
-  /* Hamburger Animation */
+  /* Hamburger animation */
   .hamburger[aria-expanded="true"] .bar:nth-child(1) {
     transform: translateY(8px) rotate(45deg);
   }
