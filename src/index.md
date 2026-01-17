@@ -4,16 +4,19 @@ title: About Me
 
 # Hi! I'm Scott Fredericks
 
-**I like solving interesting problems and making cool stuff.** {: style="text-align:center"}
+<section class="tagline" style="text-align: center;">
 
-<section class="approach">
+**I like helping people by solving interesting problems and making cool stuff.**
+
+</section>
+
+<section class="approach highlight-strong">
 
 ## My Approach
 
-I use code, math, and intuition to find creative solutions to challenging
-problems. I've found that leveraging a variety of backgrounds helps with finding the right tools and adapting in our rapidly changing world.
-
-As a lifelong learner, I strive to thoroughly document my findings and share them in accessible ways. Wherever I work, I prioritize fostering a culture of mentorship and collaboration.
+- **Cross-Discipline Mindset:** I use ideas from physics and mathematics to find novel solutions to difficult problems.
+- **Ownership and Adaptability:** I take ownership of outcomes, building deep understanding from first principles and treating challenges as opportunities to grow.
+- **Shared Understanding:** I'm committed to intentional mentorship and making complex knowledge easily accessible.
 
 </section>
 
@@ -23,8 +26,8 @@ As a lifelong learner, I strive to thoroughly document my findings and share the
 
 ### Programming
 
-My main language is Python, but I've also worked with Rust, JavaScript, C++, and other
-languages. I have professional experience with testing, DevOps, feature planning, and
+My strongest language is Python, though I also work with Rust, JavaScript, C++, and other
+languages. Beyond writing code, I have professional experience with testing, DevOps, feature planning, and
 UX.
 
 ### Physics and Mathematics
@@ -33,11 +36,11 @@ My main interest is foundational theory, particularly in geometric approaches to
 
 ### Education
 
-I regularly spend time teaching and mentoring others. I have a [blog](/blog), and I'd like to begin creating educational content focused on making technical topics easy to understand.
+I actively teach and mentor others. Through my [blog](/blog) and other content, I aim to visualize complex ideas and make their core concepts accessible to everyone.
 
 ### Game Dev
 
-I've experimented with game dev since I first got a copy of [QuickBASIC](https://en.wikipedia.org/wiki/QuickBASIC) from a CD in junior high. Since then I've made game demos in various languages, and I'd like to work on larger projects.
+I first experimented with game dev after receiving a copy of [QuickBASIC](https://en.wikipedia.org/wiki/QuickBASIC) on a CD in junior high. Since then, I've built demos in various languages and remain interested in creating larger projects using [Godot](https://godotengine.org/), [Bevy](https://bevy.org/), or [PICO-8](https://www.lexaloffle.com/pico-8.php).
 
 </section>
 
