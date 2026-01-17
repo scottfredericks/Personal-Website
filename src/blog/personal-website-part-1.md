@@ -64,14 +64,15 @@ I already have experience using GitLab for Agile-style project management, but
 I'd rather not host a server or pay for a project of this size.
 
 GitHub is similar enough to GitLab, and most of my personal code is there already. Their free repos and
-issue tracking are more than enough to track the code changes and other work. I
+issue tracking are more than sufficient for the job. I
 don't mind making the code public (that's kind of the point of a dev portfolio),
 and in this particular case I don't really care if GitHub uses my code to train
 Copilot. For more sensitive code bases, I might instead use a self-hosted GitLab
 server or a paid option.
 
 For any coding project you plan to work on more than once, I recommend using
-some kind of Git workflow to track and apply changes. In theory you could just do
+some kind of [Git workflow](https://www.atlassian.com/git/tutorials/comparing-workflows)
+to help with managing your changes. In theory you could just do
 everything on a single branch, but having a separate issue for each change and
 having a branch for each issue makes it much easier to track progress over time.
 Having a searchable and taggable list of issues also makes prioritization easier
@@ -81,7 +82,7 @@ when planning what to work on next.
 
 Since I'm already using GitHub, I might as well use their hosting service called [GitHub Pages](https://docs.github.com/en/pages). It's free, it doesn't have ads, and it supports using a custom domain.
 
-The earlier version of the site used an AWS S3 bucket. That worked fine and was fairly
+The previous version of the site used an AWS S3 bucket. That worked fine and was fairly
 inexpensive, but if I can host the site for free, that's even better. Especially
 if I (hopefully) end up getting more traffic later on.
 
@@ -118,7 +119,7 @@ This creates `_config.ts` for Lume and `deno.json` for Deno.
 
 Next, I'll install the optional
 [Lume CLI](https://lume.land/docs/overview/command-line/) so that Lume commands
-are a bit shorter to type. This will let us run `lume` instead of `deno task lume`:
+are a bit shorter to type. This way we can just run `lume` instead of `deno task lume`:
 
 ```shell
 deno install --allow-run --allow-env --allow-read --name lume --force --reload --global https://deno.land/x/lume_cli/mod.ts
@@ -141,13 +142,13 @@ There are three things we care about for now:
 
 - Adding a `src` directory so that Lume only looks for source files there.
   We don't want to include the outer README.md or other top-level files
-  in the build, since those have other purposes within the repo.
+  in the build, since those have other purposes and shouldn't show up in the final site.
 - Having the server open a browser by default when we run `lume -s`.
 - Disabling the
   [debug bar](https://lume.land/docs/configuration/config-file/#debugbar) from
   the site.
 
-This gives us the following:
+To do this, we use the following for `_config.ts`:
 
 ```typescript
 import lume from "lume/mod.ts";
@@ -165,6 +166,8 @@ export default site;
 
 The other defaults are fine for now.
 
+If the `.ts` extension makes you nervous, don't worry. [TypeScript](https://www.typescriptlang.org/) is just a superset of JavaScript, and we don't need any TypeScript-specific features here.
+
 ## Creating the Project Structure
 
 ### Adding a Page
@@ -172,11 +175,11 @@ The other defaults are fine for now.
 Now that Lume is configured, we can start adding content and defining a basic
 folder structure.
 
-First, we need to create a `src` folder where everything will live.
+First, we need to create the `src` folder where everything will live.
 
 Within it, Lume will automatically discover `.md` files and generate HTML using
 them. To start, let's create a simple `src/index.md` file, which will be used to generate
-the main `index.html` (the landing page) for the site:
+the main `index.html` file (the landing page) for the site:
 
 ```md
 # Scott Fredericks
@@ -203,43 +206,35 @@ browser:
 
 If you're not familiar with [Markdown](https://www.markdownguide.org/), it's
 just a simple markup language that's well-liked by developers. It's easy to edit
-from a text editor, and it's easy to reason about how the rendered version will look
-based on the text version. For example, this Markdown:
+from a text editor, and it's easy to reason about how the rendered version (what you see in the browser)
+will look based on the text version. For example, this Markdown:
 
 ```md
 # Level One Header
 
-Summary Text
+Summary text
 
 ## Level Two Header
 
 - Item 1
   - Item 1.1
   - Item 1.2
-    - Item 1.2.1
 - Item 2
-- Item 3
 ```
 
 produces this HTML:
 
 ```html
 <h1>Level One Header</h1>
-<p>Summary Text</p>
+<p>Summary text</p>
 <h2>Level Two Header</h2>
 <ul>
-  <li>
-    Item 1 <ul>
+  <li> Item 1 <ul>
       <li>Item 1.1</li>
-      <li>
-        Item 1.2 <ul>
-          <li>Item 1.2.1</li>
-        </ul>
-      </li>
+      <li>Item 1.2</li>
     </ul>
   </li>
   <li>Item 2</li>
-  <li>Item 3</li>
 </ul>
 ```
 
@@ -249,7 +244,7 @@ and looks like this in the browser:
 
 Great, our offline website works! However, it's pretty ugly. We should add some CSS to make it less ugly.
 
-Before we can do that, we need to understand how Lume handles layouts,
+Before we can do that though, we need to understand how Lume handles layouts,
 templates, and other resources. This is because in Lume, CSS files are handled like any other resource.
 
 ### Applying a Layout
@@ -275,7 +270,7 @@ and `birthYear`:
 <p>Hello, John. Your age is 21.</p>
 ```
 
-Here, anything within the double curly braces `{{` and `}}` is treated as
+Here, anything within the double curly braces is treated as
 JavaScript code and converted to a string literal, which gets output as raw HTML. Note that the template doesn't "know" anything about the output format, so you can use expressions to generate HTML tags, comments, or any other kind of HTML code. You just need to be mindful about how you use escape characters between formats.
 
 This makes it easy to re-use parts of a file that stay the same (like the
@@ -311,7 +306,7 @@ will be `.html`.
 
 Within our template, we use the variables `title` and `content`. `title` is just
 a regular variable that we will define within the `index.md` file. `content` is
-a built-in variable that stores the rendered string value obtained by converting the source file
+a built-in variable that contains the rendered string value obtained by converting the source file
 (Markdown) to the template file type (HTML).
 
 Next, to have our `index.md` file use this layout, we can specify the built-in
@@ -336,10 +331,9 @@ title defined at the top of `index.md`:
 ### Default Data
 
 Lume also has a way to define directory-level default variable values, so that
-we don't need to include the `layout` line for every file. This way, you don't
-risk forgetting to update the `layout` line everywhere if you rename the layout
-file. We can do this by creating a file named `_data.yml` in the directory that
-we want to apply the defaults in. Let's create `src/_data.yml`:
+we don't need to include the `layout` line for every file. We can do this by
+creating a file named `_data.yml` in the directory that
+we want to apply the defaults to. Let's create `src/_data.yml`:
 
 ```yml
 layout: main.html.vto
@@ -409,7 +403,7 @@ Note that when we apply styling, we want to target the HTML elements in the
 final output (in the `_site` folder), rather than the contents of the source
 Markdown files. Our CSS code only "knows about" the rendered HTML, not Markdown or any other Lume-specific features.
 
-So, for example, to target all level 1 headers in CSS, you would use `h1`, not `#`:
+So, for example, to target all level 1 headers in CSS, you would use `h1`, not `#`. So your CSS would look like this:
 
 ```css
 h1 {
@@ -417,7 +411,7 @@ h1 {
 }
 ```
 
-and not something like:
+and not this:
 
 ```css
 # {
@@ -426,7 +420,8 @@ and not something like:
 ```
 
 If you get confused, just remember that the final website consists of everything that gets output to the `_site`
-folder, and nothing else.
+folder, and nothing else. You can inspect the contents of these files to see whether things are working the way
+you expect them to.
 
 #### Adding JavaScript
 
@@ -464,6 +459,8 @@ Then, we can add images within `md` files using the following syntax:
 ```
 
 This will insert an `<img>` tag into the output HTML using a relative URL.
+You can also use an absolute URL if you're referencing an external image from
+another site.
 
 Here, we expect an image to exist at `src/img/filename.png`. Note the `/` at the
 beginning of the file path, which is necessary to reference the website root
@@ -498,10 +495,10 @@ url: /blog/
 ```
 
 This will be rendered to `<domain name>/blog/index.html`, where `<domain name>` is whatever our public site URL is. By adding `url: /blog/`, we
-can properly utilize pretty URLs so that the resulting URL is just
+can properly utilize pretty URLs so that the user-facing URL is just
 `<domain name>/blog/`.
 
-To designate files as blog articles, we'll add a `blog_article` tag to every article
+To designate which files are blog articles, we'll add a `blog_article` tag to every article
 `.md` file that we want to appear in the list. We'll also add a `date` variable
 that we can list at the top of the article and use for sorting. Here's the top
 of an article `.md` file:
@@ -592,7 +589,7 @@ url: /blog/
 
 First, we get the list of articles and sort them in descending order based on
 date. We keep track of the year for each article in the `currentYear` variable
-and update it each time we find a new year.
+and update it each time we find a new year:
 
 ```html
 {{ set articles = search.pages("blog_article", "date=desc") }}
@@ -660,13 +657,13 @@ layout: main.html.vto
 {{ content }}
 ```
 
-To apply this to all blog articles, we create `src/blog/_data.yml`:
+To make this the default layout for all blog articles, we create `src/blog/_data.yml`:
 
 ```yml
 layout: blog_article.html.vto
 ```
 
-Looking at the article in the browser:
+Now, looking at the article in the browser, we get this:
 
 ![Article Date](/img/blog/personal-website-part-1/article_date.png)
 
