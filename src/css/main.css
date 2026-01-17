@@ -60,6 +60,8 @@
 :root {
   --navbar-height: 65px;
 
+  color-scheme: dark;
+
   --background1: #02020d;
   --background2: #03051a;
   --background3: #090d40;
@@ -78,6 +80,7 @@
 
 /* Dark theme override */
 [data-theme="light"] {
+  color-scheme: light;
   --background1: #f7efe2;
   --background2: #fae5b1;
   --background3: #eec67c;
