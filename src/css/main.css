@@ -76,7 +76,7 @@
   --backdrop2: #02020d52;
 }
 
-/* Dark Theme Override */
+/* Dark theme override */
 [data-theme="light"] {
   --background1: #f7efe2;
   --background2: #fae5b1;
@@ -90,7 +90,7 @@
   --accent1: #148882;
   --accent2: #1c8d87;
   --accent3: #21a59e;
-  --backdrop1: #fffefbf5;
+  --backdrop1: #fffefcef;
   --backdrop2: #f7f3ea28;
 }
 
@@ -108,13 +108,9 @@ body {
 
   margin: 0;
 
-  /* FIX: Do not reset padding to 0 here because navbar.css needs to set the top padding. */
-  /* padding: 0;  <-- REMOVE THIS LINE */
-
-  /* FIX: Ensure padding is included in total width/height calculations */
   box-sizing: border-box;
 
-  /* Allows Canvas to resize to content */
+  /* Allows canvas to resize to content */
   position: relative;
   min-height: 100vh;
 }
@@ -122,16 +118,22 @@ body {
 main {
   position: relative;
   z-index: 2; /* Sits above the fixed canvas */
-  width: 70%;
+  width: 95%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 75px 75px;
+  /* padding: 75px 100px; */
+  padding-left: 75px;
+  padding-right: 75px;
+  padding-bottom: 75px;
+  padding-top: 50px;
+  margin-top: -20px;
 
   background: var(--backdrop1);
 
   --mask-vert: linear-gradient(
     to bottom,
-    black 0px,
+    transparent 0px,
+    black 20px,
     black calc(100% - 50px),
     transparent 100%
   );
@@ -230,4 +232,16 @@ section.contact ul {
 section.contact ul li {
   display: block;
   padding-bottom: 0.6rem;
+}
+
+/* Allow using accent color for bold */
+
+.highlight-strong strong {
+  color: var(--accent3);
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: 3rem 1.5rem;
+  }
 }
