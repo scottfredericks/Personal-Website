@@ -121,13 +121,19 @@ main {
   width: 95%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 75px 75px;
+  /* padding: 75px 100px; */
+  padding-left: 75px;
+  padding-right: 75px;
+  padding-bottom: 75px;
+  padding-top: 50px;
+  margin-top: -20px;
 
   background: var(--backdrop1);
 
   --mask-vert: linear-gradient(
     to bottom,
-    black 0px,
+    transparent 0px,
+    black 20px,
     black calc(100% - 50px),
     transparent 100%
   );
@@ -237,14 +243,5 @@ section.contact ul li {
 @media (max-width: 768px) {
   main {
     padding: 3rem 1.5rem;
-
-    --mask-horiz: linear-gradient(
-      to right,
-      black 0px,
-      black 100%
-    );
-
-    -webkit-mask-composite: source-over;
-    mask-composite: add;
   }
 }
