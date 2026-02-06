@@ -222,6 +222,22 @@ main a:active {
   color: var(--primary3);
 }
 
+/* Tagline section */
+
+section.tagline {
+  font-size: x-large;
+  text-align: center;
+}
+
+/* Learn More section */
+
+section.learn-more p {
+  font-size: x-large;
+  text-align: center;
+  display: block;
+  padding-bottom: 0.6rem;
+}
+
 /* Contact section */
 
 section.contact ul {
