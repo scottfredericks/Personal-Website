@@ -7,6 +7,18 @@ url: /projects/
 
 A selection of professional and independent work, spanning multiple fields.{: style="text-align: center;"}
 
+## Educational YouTube Channel: "Smartishness"
+
+_**Tech**: Python (Manim), video editing (DaVinci Resolve), audio editing (Audacity), script writing, procedural animation, voice over_
+
+<iframe src="https://www.youtube.com/embed/ecTbpKWNtYU?si=wTN9Z1XsRWKXwUGl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+The ["Smartishness" YouTube channel](https://www.youtube.com/@Smartishness) uses intuitive visuals and careful explanations to explore topics in math, physics, and computer science.
+
+The goal is to make seemingly complex concepts easy to approach and understand. I strongly believe that when the primary focus is on first-principles understanding, you can make the core ideas for just about any topic accessible to a wide audience.
+
+Animations are procedurally generated using [Manim Community Edition](https://www.manim.community/), a Python library originally created for the [3Blue1Brown](https://www.3blue1brown.com/about) channel, which serves as a major inspiration for my own. Audio and visual assets are mixed and composited using [Audacity](https://www.audacityteam.org/) and [DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve).
+
 ## End-to-End Test Automation Framework
 
 _**Tech**: Python, JavaScript, gRPC, pytest, industrial protocols_

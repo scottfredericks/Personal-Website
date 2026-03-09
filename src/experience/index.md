@@ -14,6 +14,14 @@ Software Engineer specializing in Python, tooling, and automation. Applies the a
 
 ## Development Experience
 
+### "Smartishness" YouTube Channel <span class="job-location">Remote</span>
+
+#### Founder and Educational Content Creator <span class="job-date">Feb 2025–Current</span>
+
+- Developed procedural vector animations using Python ([Manim library](https://www.manim.community)) to visualize abstract concepts in mathematics and physics for a public audience
+- Wrote and recorded rigorous, accessible scripts and technical documentation distilling advanced concepts for non-expert end users
+- Managed the end-to-end production lifecycle from initial concept to final release, editing and compositing audio and video assets using Audacity and DaVinci Resolve
+
 ### CIMON Inc. <span class="job-location">Henderson, NV</span>
 
 #### Test Engineering Manager <span class="job-date"><time datetime="2024-10">Oct 2024</time>–<time datetime="2025-05">May 2025</time></span>
@@ -121,5 +129,6 @@ Software Engineer specializing in Python, tooling, and automation. Applies the a
 - Las Vegas, NV
 - [LinkedIn](https://www.linkedin.com/in/scott-fredericks/)
 - [GitHub](https://github.com/scottfredericks)
+- [YouTube](https://www.youtube.com/@Smartishness)
 
 </section>

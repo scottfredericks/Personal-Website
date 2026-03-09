@@ -37,7 +37,7 @@ I've always been drawn to foundational theory, especially geometric approaches t
 
 ### Education
 
-I enjoy teaching and mentoring others. Through my [blog](/blog) and other content, I aim to visualize complex ideas and make their core concepts accessible to everyone.
+I enjoy teaching and mentoring others. Through my [YouTube channel "Smartishness"](https://www.youtube.com/@Smartishness), [my blog](/blog), and other content, I aim to break down advanced topics into accessible, visually intuitive explanations.
 
 ### Game Dev
 
@@ -64,5 +64,6 @@ Read something on my [blog](/blog)
 - Las Vegas, NV
 - [LinkedIn](https://www.linkedin.com/in/scott-fredericks/)
 - [GitHub](https://github.com/scottfredericks)
+- [YouTube](https://www.youtube.com/@Smartishness)
 
 </section>
