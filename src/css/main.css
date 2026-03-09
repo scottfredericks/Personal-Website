@@ -181,7 +181,7 @@ h4, h5, h6 {
 
 /* Styling for non-text elements */
 
-img, video, canvas, svg {
+img, video, canvas, svg, iframe {
   max-width: 100%;
   height: auto;
 
