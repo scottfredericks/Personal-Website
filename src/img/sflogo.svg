@@ -102,23 +102,27 @@
       x="41.343342"
       style="font-style: normal; font-variant: normal; font-weight: bold; font-stretch: normal; font-size: 109.081px; line-height: 1.25; font-family: Lato; -inkscape-font-specification: 'Lato, Bold'; font-variant-ligatures: normal; font-variant-caps: normal; font-variant-numeric: normal; font-variant-east-asian: normal; fill: #ffe91f; fill-opacity: 1; stroke: none; stroke-width: 2.72704"
       xml:space="preserve"
-    ><tspan
+    >
+      <tspan
         style="font-style: normal; font-variant: normal; font-weight: bold; font-stretch: normal; font-size: 109.08100332px; font-family: Lato; -inkscape-font-specification: 'Lato, Bold'; font-variant-ligatures: normal; font-variant-caps: normal; font-variant-numeric: normal; font-variant-east-asian: normal; fill: #ffe91f; fill-opacity: 1; stroke-width: 2.72704"
         y="137.86946"
         x="41.343342"
         id="tspan867"
         sodipodi:role="line"
-      >SF</tspan></text>
+      >SF</tspan>
+    </text>
     <text
       xml:space="preserve"
       style="font-size: 3.175px; text-align: start; writing-mode: lr-tb; direction: ltr; text-anchor: start; fill: #000000; stroke-width: 0.264583"
       x="-42.495853"
       y="83.388092"
       id="text1"
-    ><tspan
+    >
+      <tspan
         sodipodi:role="line"
         id="tspan1"
         style="stroke-width: 0.264583"
-      /></text>
+      />
+    </text>
   </g>
 </svg>
