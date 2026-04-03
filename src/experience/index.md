@@ -16,7 +16,7 @@ Software Engineer specializing in Python, tooling, and automation. Applies the a
 
 ### "Smartishness" YouTube Channel <span class="job-location">Remote</span>
 
-#### Founder and Educational Content Creator <span class="job-date">Feb 2025–Current</span>
+#### Founder and Educational Content Creator <span class="job-date">Feb 2026–Current</span>
 
 - Developed procedural vector animations using Python ([Manim library](https://www.manim.community)) to visualize abstract concepts in mathematics and physics for a public audience
 - Wrote and recorded rigorous, accessible scripts and technical documentation distilling advanced concepts for non-expert end users
