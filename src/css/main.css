@@ -57,6 +57,7 @@
 }
 
 /* Global properties */
+/* Dark theme */
 :root {
   --navbar-height: 65px;
 
@@ -74,11 +75,11 @@
   --accent1: #ffe91f;
   --accent2: #f0be1d;
   --accent3: #cf9a09;
-  --backdrop1: #02020dde;
+  --backdrop1: #02020de5;
   --backdrop2: #02020d52;
 }
 
-/* Dark theme override */
+/* Light theme */
 [data-theme="light"] {
   color-scheme: light;
   --background1: #f7efe2;

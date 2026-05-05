@@ -11,7 +11,7 @@ A selection of professional and independent work, spanning multiple fields.{: st
 
 _**Tech**: Python (Manim), video editing (DaVinci Resolve), audio editing (Audacity), script writing, procedural animation, voice over_
 
-<iframe src="https://www.youtube.com/embed/ecTbpKWNtYU?si=wTN9Z1XsRWKXwUGl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe src="https://www.youtube.com/embed/rEwnwa1tTTI?si=Ask2EBht58va61-R" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 The ["Smartishness" YouTube channel](https://www.youtube.com/@Smartishness) uses intuitive visuals and careful explanations to explore topics in math, physics, and computer science.
 
