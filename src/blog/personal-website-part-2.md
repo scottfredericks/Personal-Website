@@ -153,7 +153,9 @@ main a:active {
 
 For the main layout, I decided to use a central column to keep the text readable, and to leave some space so that the background is always visible.
 
-To make it seem like the background 
+To ease the transition between the edges, the background, and the content, I added a gradient, as well as a solid backdrop to mute the background a bit.
+
+Since the 
 
 TODO
 
