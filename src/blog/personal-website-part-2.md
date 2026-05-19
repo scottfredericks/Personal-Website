@@ -39,13 +39,13 @@ demonstrated in
 
 Lastly, I wanted to support both dark and light mode, just for fun.
 
-After looking at some quick mock-ups for inspiration (generated using [Banana Pro](https://aistudio.google.com/models/gemini-3-pro-image)), I decided to use a simple layout for the foreground, with a dynamic maze-like background to incorporate the other colors and styles.
+After looking at some quick mock-ups for inspiration (generated using [Banana Pro](https://aistudio.google.com/models/gemini-3-pro-image)), I decided to use a simple centered column layout for the foreground, with a dynamic maze-like background to incorporate the other colors and styles.
 
 ## Choosing Colors
 
-When desigining a theme, it's important to choose colors that complement each other while providing sufficient contrast. Generally, you'll want 2-3 variants for each main "role", where roles often include background, primary, secondary, and accent.
+When desigining a theme, it's important to choose colors that complement each other while providing sufficient contrast. Generally, you'll want 2-3 variants for most of the main "color role", where roles might include background, primary, secondary, and accent. The role indicates the general purpose of the element, while the variations of each role indicate state, importance, or other organizational information.
 
-If you have a dark background, for example, you'll want most of the objects in the foreground to be light-colored. You'll also want some slightly lighter variants for the background to highlight section boundaries. You can check your contrast using an online tool like [WebAIM](https://webaim.org/resources/contrastchecker/).
+If you have a dark background, for example, you'll probably want most of the objects in the foreground to be light-colored. You'll also want some slightly lighter variants for the background to highlight section boundaries. You can check your contrast using an online tool like [WebAIM](https://webaim.org/resources/contrastchecker/).
 
 For dark mode, I decided to use black and white for my main background and text colors, and to use light red and teal for the primary and secondary colors. Gold worked well as an accent color for this theme.
 
@@ -53,7 +53,7 @@ Light mode was similar, but with light and dark colors swapped, and with slightl
 
 ### Color Variables
 
-For reusability, colors can be stored in `main.css` or another CSS location:
+For reusability, colors can be stored as variables in `main.css` or another CSS location:
 
 ```css
 /* Dark theme */
@@ -69,6 +69,7 @@ For reusability, colors can be stored in `main.css` or another CSS location:
   --primary1: #24e6dc;
   --primary2: #07a79f;
   --primary3: #08817b;
+  --primary4: #07bdb4;
   --accent1: #ffe91f;
   --accent2: #f0be1d;
   --accent3: #cf9a09;
@@ -88,6 +89,7 @@ For reusability, colors can be stored in `main.css` or another CSS location:
   --primary1: #f15757;
   --primary2: #be4e42;
   --primary3: #ad4335;
+  --primary4: #d45749;
   --accent1: #148882;
   --accent2: #1c8d87;
   --accent3: #21a59e;
@@ -96,7 +98,7 @@ For reusability, colors can be stored in `main.css` or another CSS location:
 }
 ```
 
-By using variables like so:
+If you apply the colors by variable name like so:
 
 ```css
 body {
@@ -105,11 +107,11 @@ body {
 }
 ```
 
-you can change colors globally without updating individual pages.
+then you can change colors globally without needing to update the individual pages that use them.
 
 ### Utilizing Color Variants
 
-With multiple variants for each color, we can differentiate similar elements with different levels of importance or different states. For example, headers go from brighter to more muted as they get lower in importance:
+With multiple variants for each color, we can differentiate similar elements with different levels of importance or different states. For example, these headers go from brighter to more muted as they get lower in importance:
 
 ```css
 h1 {
@@ -125,7 +127,7 @@ h4, h5, h6 {
 }
 ```
 
-Likewise, unclicked links should stand out, while clicked ones can fade more into the background. You also want some visual indication that links are being hovered over without being too different from the other link colors:
+Likewise, unclicked links should stand out, while clicked ones should blend in more with the background. You also want a subtle visual indication when links are being hovered over or actively being clicked:
 
 ```css
 main a:link {
@@ -141,23 +143,23 @@ main a:hover {
 }
 
 main a:active {
-  color: var(--primary3);
+  color: var(--primary4);
 }
 ```
 
 ## Main CSS
 
-### Centered Column View
+### Centered Column View With Gradient
 
-For the main layout, I decided to use a central column to leave some space for the background and to keep the text readable.
+For the main layout, I decided to use a central column to keep the text readable, and to leave some space so that the background is always visible.
 
-TODO
-
-### Edge Gradient
+To make it seem like the background 
 
 TODO
 
-### 
+### Other Elements
+
+TODO
 
 ## Adding a Navbar
 
