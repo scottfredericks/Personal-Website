@@ -6,7 +6,7 @@ tags: [blog_article]
 
 # Building a Personal Website - Part 1: Using Lume
 
-_Good to know before reading: basic HTML/CSS, running shell commands, editing files_
+_Good to know before reading: basic HTML/CSS, shell commands_
 
 _You can check out the source code for this website
 [on GitHub](https://github.com/scottfredericks/Personal-Website)._

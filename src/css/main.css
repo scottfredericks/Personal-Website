@@ -121,8 +121,8 @@ body {
 }
 
 main {
-  position: relative;
-  z-index: 2; /* Sits above the fixed canvas */
+  position: relative; /* Sits below the navbar vertically */
+  z-index: 2; /* Sits on top of the canvas */
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
