@@ -268,7 +268,7 @@ Note that the height for the navbar is actually defined as a variable in `main.c
   ...
 ```
 
-### Differentiating the Mobile View
+### Adding a Hamburger Button for the Mobile View
 
 Most of the navbar code is fairly standard, but one less obvious feature is hiding most of the elements behind a hamburger button menu when the window is too narrow. This keeps the navigation accessible without taking up vertical space on mobile devices.
 
@@ -341,7 +341,7 @@ To handle the transition, we use a break point in the navbar CSS based on width:
   ...
 ```
 
-For desktop (in the default CSS, above this break point section), we simply hide the hamburger button, while also defining any other properties used in the mobile view. The inner contents are displayed on the right side of the navbar:
+For desktop (in the default CSS, above this break point section), we simply hide the hamburger button, while also defining any non-overwritten properties used in the mobile view. The inner contents are displayed on the right side of the navbar:
 
 ```css
 /* Wrapper for the menu items (desktop default) */
@@ -421,11 +421,181 @@ Back in the mobile CSS, we can use this state to display the menu and animate th
 
 ## Adding a Dark Theme Toggle
 
-TODO
+To make the dark and light themes actually accessible, we'll use a toggle button in the navbar.
+
+We start with a button element consisting of in-line SVG code, to prevent the need for loading images:
+
+```html
+          <button
+            type="button"
+            id="theme-toggle"
+            class="theme-btn"
+            aria-label="Toggle Dark Mode"
+            title="Toggle Dark Mode"
+          >
+            <!-- Sun Icon -->
+            <svg
+              class="icon-sun"
+              ... >
+            </svg>
+            <!-- Moon Icon -->
+            <svg
+              class="icon-moon"
+              ... >
+            </svg>
+          </button>
+```
+
+then within the main HTML, we add two scripts for the theme loading and toggle behaviors:
+
+```html
+<html lang="en">
+  <head>
+    ...
+    <script src="/js/theme-load.js" inline></script>
+  </head>
+  <body>
+    {{ include "components/background_maze.html.vto" }}
+    {{ include "components/navbar.html.vto" }}
+    <main>
+      {{ content }}
+      <script src="/js/theme-toggle.js" inline></script>
+    </main>
+  </body>
+</html>
+```
+
+Note the `inline`: this uses a [Lume plugin](https://lume.land/plugins/inline/) to automatically insert the scripts into the HTML. This generally improves loading performance for smaller scripts, but can be detrimental for larger ones.
+
+The loading script chooses dark theme by default, and ensures we have a theme variable before the `body` is loaded. We use `localStorage` to see whether a theme has already been chosen for the site:
+
+```js
+// Immediately check local storage
+(function () {
+  const savedTheme = localStorage.getItem("theme");
+  // Only apply 'light' if specifically saved.
+  // Otherwise, we do nothing, which defaults to ':root' (Dark).
+  if (savedTheme === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+})();
+```
+
+The toggle script updates the theme, stores the value in local storage, and closes the hamburger menu if it is open:
+
+```js
+const toggleBtn = document.getElementById("theme-toggle");
+
+// Get references to the navbar elements
+const navMenu = document.getElementById("nav-menu-wrapper");
+const hamburger = document.getElementById("hamburger-btn");
+
+toggleBtn.addEventListener("click", () => {
+  // Get current setting
+  const currentTheme = document.documentElement.getAttribute("data-theme") ||
+    "dark";
+
+  // Determine new theme
+  const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+  // Update DOM
+  if (newTheme === "dark") {
+    document.documentElement.removeAttribute("data-theme");
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
+  // Update Storage
+  localStorage.setItem("theme", newTheme);
+
+  // Check if the menu wrapper exists and is currently open
+  if (navMenu && navMenu.classList.contains("active")) {
+    // Close the drawer
+    navMenu.classList.remove("active");
+
+    // Reset the hamburger button accessibility state and animation
+    if (hamburger) {
+      hamburger.setAttribute("aria-expanded", "false");
+    }
+  }
+});
+```
+
+As mentioned before, the actual theme usage comes from the variables defined in the CSS `root`, based on `data-theme`.
 
 ## Adding a Dynamic Background
 
-TODO
+For the background, I wanted to create a dynamic pattern that you can see generating in real time. To do this, I used JavaScript to draw a tile-able pattern to an in-script canvas object, then used `createPattern` with a 2D rendering context to tile the pattern to a real, fixed-position canvas object that fills the entire page. To make the pattern appear to scroll with the content, I used `onScroll` event handling to update the rendering every time the user scrolls.
+
+The HTML content is straightforward:
+
+```html
+<link rel="stylesheet" href="/css/background_maze.css" inline />
+<div id="background-maze-div">
+  <canvas id="background-maze-canvas"></canvas>
+</div>
+<script src="/js/background_maze.js" inline></script>
+```
+
+The CSS is a bit more involved, as it also handles opacity transitions when the maze first loads in and each time it begins a new generation:
+
+```css
+#background-maze-div {
+  position: fixed;
+  top: var(--navbar-height);
+  left: 0;
+  width: 100%;
+  height: calc(100vh - var(--navbar-height));
+  z-index: -1;
+  overflow: hidden;
+  background-color: var(--backdrop1);
+}
+
+#background-maze-canvas {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+#background-maze-canvas.loaded {
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+#background-maze-div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(
+      to right,
+      var(--background1) 0%,
+      var(--backdrop2) 15%,
+      var(--backdrop2) 85%,
+      var(--background1) 100%
+    ),
+    linear-gradient(
+    to bottom,
+    var(--background1) 0%,
+    var(--backdrop2) 0%,
+    var(--backdrop2) 100%,
+    var(--background1) 100%
+  );
+  transition: background 0.8s ease;
+}
+```
+
+We start by placing a div with fixed position and size, just beneath
 
 ## Adding a Font
 
